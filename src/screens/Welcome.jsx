@@ -7,7 +7,7 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
     <div className="min-h-screen flex flex-col">
       <BrickHeader
         color="#F44336"
-        images={['/elmo.png', '/bigbird.png', '/cookie-monster.png', '/bert-ernie.png', '/abby.png']}
+        images={['/elmo.png', '/cookie-monster.png', '/abby.png', '/big-bird-transparent-6-3618470511.jpg', '/bert-ernie.png']}
       />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">

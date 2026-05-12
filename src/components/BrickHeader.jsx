@@ -6,9 +6,11 @@ export default function BrickHeader({ color, items, images }) {
         className="w-full flex items-end justify-around px-3"
         style={{ backgroundColor: color, height: 96 }}
       >
-        {images.map((src, i) => (
-          <img key={i} src={src} alt="" style={{ height: 84, width: 'auto' }} />
-        ))}
+        {images.map((img, i) => {
+          const src = typeof img === 'string' ? img : img.src;
+          const height = typeof img === 'string' ? 84 : img.height;
+          return <img key={i} src={src} alt="" style={{ height, width: 'auto' }} />;
+        })}
       </div>
     );
   }

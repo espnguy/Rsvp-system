@@ -2,7 +2,7 @@ export const PARTY = {
   guestOfHonor: 'Rayyan',
   age: 2,
   title: "Rayyan's Sesame Street Party",
-  subtitle: 'A Sesame Street Birthday Bash',
+  subtitle: 'C is for Celebration!',
   dateLabel: 'Saturday, July 25 · Time TBD',
   locationName: 'TBD',
   locationAddress: '',

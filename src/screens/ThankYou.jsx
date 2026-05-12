@@ -14,7 +14,12 @@ export default function ThankYou({ data }) {
         <header className="text-center space-y-2">
           <div className="text-5xl" aria-hidden="true">🎉</div>
           <h1 className="display text-3xl text-lego-green">You're in!</h1>
-          <div className="text-3xl" aria-hidden="true">🐦 ❤️ 🍪</div>
+          <div className="flex justify-center items-end gap-3" aria-hidden="true">
+            <img src="/elmo.png" alt="" className="h-16 w-auto object-contain" />
+            <img src="/bigbird.png" alt="" className="h-20 w-auto object-contain" />
+            <img src="/cookie-monster.png" alt="" className="h-16 w-auto object-contain" />
+            <img src="/abby.png" alt="" className="h-16 w-auto object-contain" />
+          </div>
           <p className="text-gray-700">
             Hooray! Rayyan and all of Sesame Street can't wait to celebrate with you!
           </p>

@@ -37,9 +37,15 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
 
         <header className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-lego-blue mb-2">
-            C is for Celebration! 🎉
+            You're invited!
           </p>
-          <div className="text-4xl mb-2" aria-hidden="true">🐦 ❤️ 🍪</div>
+          <div className="flex justify-center items-end gap-2 mb-3" aria-hidden="true">
+            <img src="/elmo.png" alt="" className="h-16 w-auto object-contain" />
+            <img src="/bigbird.png" alt="" className="h-20 w-auto object-contain" />
+            <img src="/cookie-monster.png" alt="" className="h-16 w-auto object-contain" />
+            <img src="/bert-ernie.png" alt="" className="h-16 w-auto object-contain" />
+            <img src="/abby.png" alt="" className="h-16 w-auto object-contain" />
+          </div>
           <h1
             className="display text-[64px] text-lego-red"
             style={{ WebkitTextStroke: '1px #0D47A1' }}

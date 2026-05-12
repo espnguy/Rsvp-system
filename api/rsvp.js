@@ -1,5 +1,4 @@
 import { neon } from '@neondatabase/serverless';
-import { waitUntil } from '@vercel/functions';
 import { z } from 'zod';
 import crypto from 'node:crypto';
 
@@ -372,11 +371,8 @@ export default async function handler(req, res) {
 
     const clientRsvp = toClientRsvp(savedRow);
 
-    // Keep the Resend call alive past the response return without blocking it.
-    waitUntil(
-      notifyHost(sql, clientRsvp, mode).catch((err) =>
-        console.error('notify failed:', err)
-      )
+    notifyHost(sql, clientRsvp, mode).catch((err) =>
+      console.error('notify failed:', err)
     );
 
     return res.status(200).json({ success: true, mode, rsvp: clientRsvp });

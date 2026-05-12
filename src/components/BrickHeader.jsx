@@ -1,4 +1,22 @@
-export default function BrickHeader({ color, items }) {
+export default function BrickHeader({ color, items, images }) {
+  if (images) {
+    return (
+      <div
+        className="w-full flex items-end justify-around px-3"
+        style={{ backgroundColor: color, height: 96 }}
+        aria-hidden="true"
+      >
+        {images.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt=""
+            style={{ height: 84, width: 'auto', mixBlendMode: 'multiply' }}
+          />
+        ))}
+      </div>
+    );
+  }
   const icons = items || ['🐦', '⭐', '🍪', '⭐', '🐦'];
   return (
     <div

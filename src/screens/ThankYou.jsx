@@ -8,7 +8,7 @@ export default function ThankYou({ data }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#4CAF50" items={['🎉', '🐦', '❤️', '🍪', '🎉']} />
+      <BrickHeader color="#66BB6A" items={['🎉', '🐦', '❤️', '🍪', '🎉']} />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         <header className="text-center space-y-2">

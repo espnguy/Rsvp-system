@@ -5,7 +5,10 @@ import { PARTY } from '../partyDetails.js';
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#E32636" items={['🐦', '❤️', '🍪', '❤️', '🐦']} />
+      <BrickHeader
+        color="#F44336"
+        images={['/elmo.png', '/bigbird.png', '/cookie-monster.png', '/bert-ernie.png', '/abby.png']}
+      />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         {existingRsvp && (
@@ -39,14 +42,7 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
           <p className="text-sm font-semibold uppercase tracking-widest text-lego-blue mb-2">
             You're invited!
           </p>
-          <div className="flex justify-center items-end gap-2 mb-3" aria-hidden="true">
-            <img src="/elmo.png" alt="" className="h-16 w-auto object-contain" />
-            <img src="/bigbird.png" alt="" className="h-20 w-auto object-contain" />
-            <img src="/cookie-monster.png" alt="" className="h-16 w-auto object-contain" />
-            <img src="/bert-ernie.png" alt="" className="h-16 w-auto object-contain" />
-            <img src="/abby.png" alt="" className="h-16 w-auto object-contain" />
-          </div>
-          <h1
+<h1
             className="display text-[64px] text-lego-red"
             style={{ WebkitTextStroke: '1px #0D47A1' }}
           >

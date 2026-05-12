@@ -5,15 +5,15 @@ export default {
     extend: {
       colors: {
         lego: {
-          blue: '#1976D2',
-          'blue-dark': '#0D47A1',
-          red: '#E32636',
-          'red-dark': '#B31B26',
-          yellow: '#FFD700',
-          'yellow-dark': '#C9A600',
-          green: '#4CAF50',
-          'green-dark': '#2E7D32',
-          bg: '#FFF9E6',
+          blue: '#2196F3',
+          'blue-dark': '#1565C0',
+          red: '#F44336',
+          'red-dark': '#C62828',
+          yellow: '#FFC107',
+          'yellow-dark': '#FF8F00',
+          green: '#66BB6A',
+          'green-dark': '#388E3C',
+          bg: '#FFFDE7',
         },
       },
       fontFamily: {

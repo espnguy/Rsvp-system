@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Rayyan Birthday RSVP//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:rayyan-birthday-2026@sesame-rsvp
+DTSTAMP:20260424T000000Z
+DTSTART:20260725
+DTEND:20260725
+SUMMARY:Rayyan's Sesame Street Party 🎉
+LOCATION:TBD
+DESCRIPTION:Come celebrate Rayyan turning 2! A Sesame Street Birthday Bash. Hosts: Mustafa and Shazia 214-435-1676.
+URL:https://funcitybillerica.lilypadpos.app/public/onlinewaiver/waiver.php
+END:VEVENT
+END:VCALENDAR

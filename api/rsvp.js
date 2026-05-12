@@ -19,7 +19,7 @@ function getSql() {
   return _sql;
 }
 
-const COOKIE_NAME = 'brickday_rsvp';
+const COOKIE_NAME = 'birthday_rsvp';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 let schemaReady = false;
@@ -39,7 +39,7 @@ async function ensureSchema() {
       total_people INT NOT NULL DEFAULT 0,
       total_jumpers INT NOT NULL DEFAULT 0,
       notes TEXT,
-      message_to_teddy TEXT
+      message_to_rayyan TEXT
     )
   `;
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS edit_token TEXT`;
@@ -119,7 +119,7 @@ const RsvpSchema = z
     childName: nullableText(200),
     attendees: z.array(AttendeeSchema).max(20).optional().default([]),
     notes: nullableText(2000),
-    messageToTeddy: nullableText(2000),
+    messageToRayyan: nullableText(2000),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -165,7 +165,7 @@ function toClientRsvp(row) {
     childName: row.child_name || '',
     attendees: Array.isArray(row.attendees) ? row.attendees : [],
     notes: row.notes || '',
-    messageToTeddy: row.message_to_teddy || '',
+    messageToRayyan: row.message_to_rayyan || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -175,7 +175,7 @@ async function loadByToken(sql, token) {
   if (!token) return null;
   const rows = await sql`
     SELECT id, created_at, updated_at, attending, parent_name, contact,
-           child_name, attendees, notes, message_to_teddy
+           child_name, attendees, notes, message_to_rayyan
     FROM rsvps WHERE edit_token = ${token} LIMIT 1
   `;
   return rows[0] || null;
@@ -218,7 +218,7 @@ async function notifyHost(sql, rsvp, mode) {
     `Child: ${rsvp.childName || '—'}`,
     `Attendees: ${attendeesList}`,
     `Notes: ${rsvp.notes || '—'}`,
-    `Message to Teddy: ${rsvp.messageToTeddy || '—'}`,
+    `Message to Rayyan: ${rsvp.messageToRayyan || '—'}`,
   ].join('\n');
 
   const esc = (s) =>
@@ -237,7 +237,7 @@ async function notifyHost(sql, rsvp, mode) {
         <tr><td><b>Child</b></td><td>${esc(rsvp.childName) || '—'}</td></tr>
         <tr><td><b>Attendees</b></td><td>${esc(attendeesList)}</td></tr>
         <tr><td><b>Notes</b></td><td>${esc(rsvp.notes) || '—'}</td></tr>
-        <tr><td><b>Message</b></td><td>${esc(rsvp.messageToTeddy) || '—'}</td></tr>
+        <tr><td><b>Message</b></td><td>${esc(rsvp.messageToRayyan) || '—'}</td></tr>
       </table>
     </div>
   `;
@@ -250,7 +250,7 @@ async function notifyHost(sql, rsvp, mode) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Brickday RSVP <onboarding@resend.dev>',
+        from: "Rayyan's Party RSVP <onboarding@resend.dev>",
         to: [email],
         subject,
         text,
@@ -319,7 +319,7 @@ export default async function handler(req, res) {
   const contact = input.contact ? input.contact.trim() : '';
   const childName = input.childName ? input.childName.trim() : null;
   const notes = input.notes ? input.notes.trim() : null;
-  const messageToTeddy = input.messageToTeddy ? input.messageToTeddy.trim() : null;
+  const messageToRayyan = input.messageToRayyan ? input.messageToRayyan.trim() : null;
   const attendeesJson = JSON.stringify(attendees);
 
   try {
@@ -343,11 +343,11 @@ export default async function handler(req, res) {
           total_people = ${totalPeople},
           total_jumpers = ${totalJumpers},
           notes = ${notes},
-          message_to_teddy = ${messageToTeddy},
+          message_to_rayyan = ${messageToRayyan},
           updated_at = NOW()
         WHERE id = ${existingRow.id}
         RETURNING id, created_at, updated_at, attending, parent_name, contact,
-                  child_name, attendees, notes, message_to_teddy
+                  child_name, attendees, notes, message_to_rayyan
       `;
       savedRow = rows[0];
       mode = 'updated';
@@ -357,13 +357,13 @@ export default async function handler(req, res) {
       const rows = await sql`
         INSERT INTO rsvps
           (attending, parent_name, contact, child_name, attendees,
-           total_people, total_jumpers, notes, message_to_teddy, edit_token)
+           total_people, total_jumpers, notes, message_to_rayyan, edit_token)
         VALUES
           (${attending}, ${parentName}, ${contact}, ${childName},
            ${attendeesJson}::jsonb, ${totalPeople}, ${totalJumpers},
-           ${notes}, ${messageToTeddy}, ${newToken})
+           ${notes}, ${messageToRayyan}, ${newToken})
         RETURNING id, created_at, updated_at, attending, parent_name, contact,
-                  child_name, attendees, notes, message_to_teddy
+                  child_name, attendees, notes, message_to_rayyan
       `;
       savedRow = rows[0];
       mode = 'created';

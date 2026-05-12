@@ -6,10 +6,10 @@
   ],
   "headers": [
     {
-      "source": "/teddy-brickday.ics",
+      "source": "/rayyan-birthday.ics",
       "headers": [
         { "key": "Content-Type", "value": "text/calendar; charset=utf-8" },
-        { "key": "Content-Disposition", "value": "inline; filename=\"teddy-brickday.ics\"" },
+        { "key": "Content-Disposition", "value": "inline; filename=\"rayyan-birthday.ics\"" },
         { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }

@@ -5,7 +5,7 @@ import { PARTY } from '../partyDetails.js';
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#0055BF" studColor="#003D8A" />
+      <BrickHeader color="#E32636" />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         {existingRsvp && (
@@ -41,9 +41,9 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
           </p>
           <h1
             className="display text-[64px] text-lego-red"
-            style={{ WebkitTextStroke: '1px #0055BF' }}
+            style={{ WebkitTextStroke: '1px #0D47A1' }}
           >
-            TEDDY
+            RAYYAN
           </h1>
           <p className="display text-lego-blue text-2xl mt-1">
             is turning {PARTY.age}! <span aria-hidden="true">🎉</span>
@@ -73,15 +73,19 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
             value={
               <>
                 <div className="font-semibold">{PARTY.locationName}</div>
-                <div className="text-sm text-gray-600">{PARTY.locationAddress}</div>
-                <a
-                  href={PARTY.locationMapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-1 text-sm font-semibold text-lego-blue underline"
-                >
-                  Get directions →
-                </a>
+                {PARTY.locationAddress && (
+                  <div className="text-sm text-gray-600">{PARTY.locationAddress}</div>
+                )}
+                {PARTY.locationMapUrl && (
+                  <a
+                    href={PARTY.locationMapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-1 text-sm font-semibold text-lego-blue underline"
+                  >
+                    Get directions →
+                  </a>
+                )}
               </>
             }
           />

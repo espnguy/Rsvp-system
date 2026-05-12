@@ -1,8 +1,8 @@
 {
-  "name": "brickday-rsvp",
+  "name": "rayyan-birthday-rsvp",
   "version": "1.0.0",
   "private": true,
-  "description": "RSVP app for Teddy's LEGO Brickday party",
+  "description": "RSVP app for Rayyan's Sesame Street birthday party",
   "type": "module",
   "scripts": {
     "dev": "vite",

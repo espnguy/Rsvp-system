@@ -10,7 +10,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
   );
   const [contact, setContact] = useState(initial ? initial.contact || '' : '');
   const [message, setMessage] = useState(
-    initial ? initial.messageToTeddy || '' : ''
+    initial ? initial.messageToRayyan || '' : ''
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -20,7 +20,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
     e.preventDefault();
     setError(null);
     if (!parentName.trim()) {
-      setError('Please enter your name so Teddy knows who said hi.');
+      setError('Please enter your name so Rayyan knows who said hi.');
       return;
     }
 
@@ -31,7 +31,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
       childName: null,
       attendees: [],
       notes: null,
-      messageToTeddy: message.trim() || null,
+      messageToRayyan: message.trim() || null,
     };
 
     setSubmitting(true);
@@ -56,11 +56,11 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
   if (done) {
     return (
       <div className="min-h-screen flex flex-col">
-        <BrickHeader color="#0055BF" studColor="#003D8A" />
+        <BrickHeader color="#1976D2" />
         <main className="flex-1 px-5 pt-8 pb-10 space-y-5 text-center">
           <h1 className="display text-3xl text-lego-blue">Thanks for letting us know 💙</h1>
           <p className="text-gray-700">
-            Teddy will miss you! We'll pass along your note.
+            Rayyan will miss you! We'll pass along your note.
           </p>
         </main>
       </div>
@@ -69,7 +69,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#0055BF" studColor="#003D8A" />
+      <BrickHeader color="#1976D2" />
 
       <form onSubmit={handleSubmit} className="flex-1 px-5 pt-5 pb-10 space-y-4" noValidate>
         <div className="flex items-center justify-between">
@@ -87,7 +87,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
         </div>
 
         <p className="text-gray-700 text-center">
-          Drop a quick note so Teddy knows you were thinking of him.
+          Drop a quick note so Rayyan knows you were thinking of them.
         </p>
 
         <div className="card space-y-4">
@@ -110,7 +110,7 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
             name="contact"
           />
           <Input
-            label="Message to Teddy (optional)"
+            label="Message to Rayyan (optional)"
             as="textarea"
             value={message}
             onChange={setMessage}

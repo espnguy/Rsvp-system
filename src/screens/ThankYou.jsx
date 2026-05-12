@@ -8,14 +8,14 @@ export default function ThankYou({ data }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#237841" studColor="#15502A" />
+      <BrickHeader color="#4CAF50" />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         <header className="text-center space-y-2">
           <div className="text-5xl" aria-hidden="true">🎉</div>
           <h1 className="display text-3xl text-lego-green">You're in!</h1>
           <p className="text-gray-700">
-            Teddy is going to be so excited to see you at the Brickday party.
+            Rayyan is going to be so excited to see you at the party!
           </p>
         </header>
 
@@ -58,16 +58,16 @@ export default function ThankYou({ data }) {
           </div>
         </section>
 
-        {jumperCount > 0 && (
+        {PARTY.waiverUrl && jumperCount > 0 && (
           <section className="warn-card space-y-2" aria-labelledby="waiver-heading">
             <div className="flex items-start gap-2">
               <span className="text-xl leading-none" aria-hidden="true">⚠️</span>
               <div>
                 <h2 id="waiver-heading" className="font-bold text-base">
-                  Jump waiver required
+                  Waiver required
                 </h2>
                 <p className="text-sm leading-snug mt-1">
-                  FunCity requires a signed waiver before arrival for anyone jumping.
+                  The venue requires a signed waiver before arrival for anyone jumping.
                   Sign it now so there's no hold-up at the door.
                 </p>
               </div>
@@ -75,15 +75,17 @@ export default function ThankYou({ data }) {
           </section>
         )}
 
-        <BrickButton
-          color="red"
-          as="a"
-          href={PARTY.waiverUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sign the jump waiver →
-        </BrickButton>
+        {PARTY.waiverUrl && (
+          <BrickButton
+            color="red"
+            as="a"
+            href={PARTY.waiverUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Sign the jump waiver →
+          </BrickButton>
+        )}
 
         <section className="card text-sm text-gray-700 space-y-1">
           <div className="font-semibold text-gray-900">See you there!</div>

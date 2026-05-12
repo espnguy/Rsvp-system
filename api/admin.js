@@ -18,7 +18,7 @@ function getSql() {
 }
 
 const ET = 'America/New_York';
-const COOKIE_NAME = 'brickday_admin';
+const COOKIE_NAME = 'birthday_admin';
 const COOKIE_PAYLOAD = 'admin-v1';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
@@ -196,13 +196,13 @@ function loginPage({ error }) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin sign-in · Brickday</title>
+<title>Admin sign-in · Rayyan's Party</title>
 ${STYLES}
 </head>
 <body>
 <header>
   <div class="head-left">
-    <h1>Brickday Admin</h1>
+    <h1>Rayyan's Party Admin</h1>
     <div class="sub">Sign in to view RSVPs</div>
   </div>
 </header>
@@ -254,7 +254,7 @@ function listPage({ rows, totals, flash, settings, resendConfigured }) {
           }</td>
           <td>${attendeesHtml(r.attendees)}</td>
           <td>${escapeHtml(r.notes) || '<span class="muted">—</span>'}</td>
-          <td>${escapeHtml(r.message_to_teddy) || '<span class="muted">—</span>'}</td>
+          <td>${escapeHtml(r.message_to_rayyan) || '<span class="muted">—</span>'}</td>
           <td>
             <div class="row-actions">
               <a class="btn btn-edit" href="/admin?action=edit&id=${r.id}">Edit</a>
@@ -272,13 +272,13 @@ function listPage({ rows, totals, flash, settings, resendConfigured }) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Brickday RSVPs</title>
+<title>Rayyan's Party RSVPs</title>
 ${STYLES}
 </head>
 <body>
 <header>
   <div class="head-left">
-    <h1>Teddy's Brickday RSVPs</h1>
+    <h1>Rayyan's Birthday RSVPs</h1>
     <div class="sub">${rows.length} response${rows.length === 1 ? '' : 's'} · times in Eastern</div>
   </div>
   <form method="post" action="/admin?action=logout" style="margin:0">
@@ -313,7 +313,7 @@ ${STYLES}
         <th>Coming?</th>
         <th>Attendees</th>
         <th>Notes</th>
-        <th>Msg to Teddy</th>
+        <th>Msg to Rayyan</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -334,7 +334,7 @@ function editPage({ row, error }) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Edit RSVP · Brickday</title>
+<title>Edit RSVP · Rayyan's Party</title>
 ${STYLES}
 </head>
 <body>
@@ -378,8 +378,8 @@ ${STYLES}
       <label for="notes">Notes</label>
       <textarea id="notes" name="notes" rows="2">${escapeHtml(row.notes)}</textarea>
 
-      <label for="message_to_teddy">Message to Teddy</label>
-      <textarea id="message_to_teddy" name="message_to_teddy" rows="2">${escapeHtml(row.message_to_teddy)}</textarea>
+      <label for="message_to_rayyan">Message to Rayyan</label>
+      <textarea id="message_to_rayyan" name="message_to_rayyan" rows="2">${escapeHtml(row.message_to_rayyan)}</textarea>
     </div>
 
     <div class="actions">
@@ -478,7 +478,7 @@ async function loadAllRows(sql) {
   try {
     const rows = await sql`
       SELECT id, created_at, attending, parent_name, contact, child_name,
-             attendees, total_people, total_jumpers, notes, message_to_teddy
+             attendees, total_people, total_jumpers, notes, message_to_rayyan
       FROM rsvps
       ORDER BY created_at DESC
     `;
@@ -542,7 +542,7 @@ function computeTotals(rows) {
 async function loadOne(sql, id) {
   const rows = await sql`
     SELECT id, created_at, attending, parent_name, contact, child_name,
-           attendees, total_people, total_jumpers, notes, message_to_teddy
+           attendees, total_people, total_jumpers, notes, message_to_rayyan
     FROM rsvps WHERE id = ${id}
   `;
   return rows[0] || null;
@@ -701,7 +701,7 @@ export default async function handler(req, res) {
     const contact = asStringOrNull(body.contact) || '';
     const childName = asStringOrNull(body.child_name);
     const notes = asStringOrNull(body.notes);
-    const messageToTeddy = asStringOrNull(body.message_to_teddy);
+    const messageToRayyan = asStringOrNull(body.message_to_rayyan);
 
     let attendees = [];
     try {
@@ -733,7 +733,7 @@ export default async function handler(req, res) {
           total_people = ${totalPeople},
           total_jumpers = ${totalJumpers},
           notes = ${notes},
-          message_to_teddy = ${messageToTeddy}
+          message_to_rayyan = ${messageToRayyan}
         WHERE id = ${id}
       `;
       return redirect(res, '/admin', {

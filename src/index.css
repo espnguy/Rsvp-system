@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --lego-blue: #0055bf;
-  --lego-blue-dark: #003d8a;
-  --lego-red: #c91a09;
-  --lego-red-dark: #8f1206;
-  --lego-yellow: #f7d117;
-  --lego-yellow-dark: #c2a20e;
-  --lego-green: #237841;
-  --lego-green-dark: #15502a;
-  --lego-bg: #f5f3ee;
+  --lego-blue: #1976d2;
+  --lego-blue-dark: #0d47a1;
+  --lego-red: #e32636;
+  --lego-red-dark: #b31b26;
+  --lego-yellow: #ffd700;
+  --lego-yellow-dark: #c9a600;
+  --lego-green: #4caf50;
+  --lego-green-dark: #2e7d32;
+  --lego-bg: #fff9e6;
 }
 
 html,

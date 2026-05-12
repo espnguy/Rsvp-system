@@ -77,7 +77,7 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
       childName: childName.trim(),
       attendees,
       notes: notes.trim() || null,
-      messageToTeddy: null,
+      messageToRayyan: null,
     };
 
     setSubmitting(true);
@@ -101,7 +101,7 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#F7D117" studColor="#C2A20E" />
+      <BrickHeader color="#FFD700" />
 
       <form onSubmit={handleSubmit} className="flex-1 px-5 pt-5 pb-10 space-y-4" noValidate>
         <div className="flex items-center justify-between">

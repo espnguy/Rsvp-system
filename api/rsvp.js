@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import postgres from 'postgres';
 import { z } from 'zod';
 import crypto from 'node:crypto';
 
@@ -10,11 +10,9 @@ function getSql() {
     process.env.POSTGRES_URL ||
     process.env.NEON_DATABASE_URL;
   if (!conn) {
-    throw new Error(
-      'No database connection string set. Add a Neon database in Vercel → Storage.'
-    );
+    throw new Error('No DATABASE_URL set. Add a Postgres database in Railway.');
   }
-  _sql = neon(conn);
+  _sql = postgres(conn);
   return _sql;
 }
 

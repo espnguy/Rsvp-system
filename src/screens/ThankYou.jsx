@@ -8,14 +8,15 @@ export default function ThankYou({ data }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#4CAF50" />
+      <BrickHeader color="#4CAF50" items={['🎉', '🐦', '❤️', '🍪', '🎉']} />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         <header className="text-center space-y-2">
           <div className="text-5xl" aria-hidden="true">🎉</div>
           <h1 className="display text-3xl text-lego-green">You're in!</h1>
+          <div className="text-3xl" aria-hidden="true">🐦 ❤️ 🍪</div>
           <p className="text-gray-700">
-            Rayyan is going to be so excited to see you at the party!
+            Hooray! Rayyan and all of Sesame Street can't wait to celebrate with you!
           </p>
         </header>
 

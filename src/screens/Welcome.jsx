@@ -5,7 +5,7 @@ import { PARTY } from '../partyDetails.js';
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#E32636" />
+      <BrickHeader color="#E32636" items={['🐦', '❤️', '🍪', '❤️', '🐦']} />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         {existingRsvp && (
@@ -37,8 +37,9 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
 
         <header className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-lego-blue mb-2">
-            You're invited!
+            C is for Celebration! 🎉
           </p>
+          <div className="text-4xl mb-2" aria-hidden="true">🐦 ❤️ 🍪</div>
           <h1
             className="display text-[64px] text-lego-red"
             style={{ WebkitTextStroke: '1px #0D47A1' }}
@@ -46,7 +47,10 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
             RAYYAN
           </h1>
           <p className="display text-lego-blue text-2xl mt-1">
-            is turning {PARTY.age}! <span aria-hidden="true">🎉</span>
+            is turning {PARTY.age}! <span aria-hidden="true">🎂</span>
+          </p>
+          <p className="mt-1 text-sm text-gray-500 italic">
+            Brought to you by the number {PARTY.age}!
           </p>
           <p className="mt-3 text-lg font-semibold text-gray-800">{PARTY.subtitle}</p>
         </header>

@@ -4,7 +4,7 @@ export default function BrickHeader({ color, items, images }) {
       <div
         aria-hidden="true"
         className="w-full flex items-end justify-around px-3"
-        style={{ backgroundColor: color, height: 96 }}
+        style={{ backgroundColor: color, height: 104 }}
       >
         {images.map((img, i) => {
           const src = typeof img === 'string' ? img : img.src;

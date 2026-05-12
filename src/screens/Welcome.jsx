@@ -8,7 +8,7 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
       <BrickHeader
         color="#F44336"
         images={[
-          { src: '/elmo-removebg-preview.png', height: 78 },
+          { src: '/elmo-removebg-preview.png', height: 96 },
           { src: '/cookie-monster.png', height: 78 },
           { src: '/abby.png', height: 82 },
           { src: '/bigbird-removebg-preview.png', height: 90 },

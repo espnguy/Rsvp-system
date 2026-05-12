@@ -60,7 +60,6 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
           <p className="mt-1 text-sm text-gray-500 italic">
             Brought to you by the number {PARTY.age}!
           </p>
-          <p className="mt-3 text-lg font-semibold text-gray-800">{PARTY.subtitle}</p>
         </header>
 
         <section className="card space-y-3">

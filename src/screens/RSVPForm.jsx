@@ -101,7 +101,16 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#FFC107" items={['🐦', '⭐', '🐦', '⭐', '🐦']} />
+      <BrickHeader
+        color="#FFC107"
+        images={[
+          { src: '/elmo-44.png', height: 78 },
+          { src: '/cookie-monster.png', height: 78 },
+          { src: '/abby.png', height: 82 },
+          { src: '/bigbird-removebg-preview.png', height: 90 },
+          { src: '/bert-ernie.png', height: 80 },
+        ]}
+      />
 
       <form onSubmit={handleSubmit} className="flex-1 px-5 pt-5 pb-10 space-y-4" noValidate>
         <div className="flex items-center justify-between">

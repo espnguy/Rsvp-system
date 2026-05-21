@@ -6,11 +6,11 @@ METHOD:PUBLISH
 BEGIN:VEVENT
 UID:rayyan-birthday-2026@sesame-rsvp
 DTSTAMP:20260424T000000Z
-DTSTART:20260725
-DTEND:20260725
+DTSTART;TZID=America/Chicago:20260725T120000
+DTEND;TZID=America/Chicago:20260725T140000
 SUMMARY:Rayyan's Sesame Street Party 🎉
-LOCATION:TBD
-DESCRIPTION:Come celebrate Rayyan turning 2! A Sesame Street Birthday Bash. Hosts: Mustafa and Shazia 214-435-1676.
-URL:https://funcitybillerica.lilypadpos.app/public/onlinewaiver/waiver.php
+LOCATION:Cloudbound\, 3333 Preston Rd. Ste 1200\, Frisco\, TX
+DESCRIPTION:Come celebrate Rayyan turning 2! A Sesame Street Birthday Bash.\nHosts: Mustafa and Shazia · 214-435-1676\nWaiver required — sign before you arrive: https://waiver.haveablast.roller.app/CloudboundFriscoPrestonRidge/home
+URL:https://rayyanturns2.party/
 END:VEVENT
 END:VCALENDAR

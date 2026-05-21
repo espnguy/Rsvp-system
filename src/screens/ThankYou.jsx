@@ -8,19 +8,22 @@ export default function ThankYou({ data }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader color="#66BB6A" items={['🎉', '🐦', '❤️', '🍪', '🎉']} />
+      <BrickHeader
+        color="#66BB6A"
+        images={[
+          { src: '/elmo-44.png', height: 78 },
+          { src: '/cookie-monster.png', height: 78 },
+          { src: '/abby.png', height: 82 },
+          { src: '/bigbird-removebg-preview.png', height: 90 },
+          { src: '/bert-ernie.png', height: 80 },
+        ]}
+      />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         <header className="text-center space-y-2">
-          <div className="text-5xl" aria-hidden="true">🎉</div>
           <h1 className="display text-3xl text-lego-green">You're in!</h1>
-          <div className="flex justify-center items-end gap-3" aria-hidden="true">
-            <img src="/elmo.png" alt="" className="h-16 w-auto object-contain" />
-            <img src="/bigbird.png" alt="" className="h-20 w-auto object-contain" />
-            <img src="/cookie-monster.png" alt="" className="h-16 w-auto object-contain" />
-            <img src="/abby.png" alt="" className="h-16 w-auto object-contain" />
-          </div>
-          <p className="text-gray-700">
+          <img src="/elmo-clipart-birthday-219777251.png" alt="" aria-hidden="true" className="h-36 w-auto mx-auto" />
+<p className="text-gray-700">
             Hooray! Rayyan and all of Sesame Street can't wait to celebrate with you!
           </p>
         </header>

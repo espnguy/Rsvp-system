@@ -357,7 +357,11 @@ ${STYLES}
 }
 
 function editPage({ row, error }) {
-  const attendeesJson = JSON.stringify(Array.isArray(row.attendees) ? row.attendees : []);
+  let initialAttendees = Array.isArray(row.attendees) ? row.attendees : [];
+  if (initialAttendees.length === 0 && row.child_name) {
+    initialAttendees = [{ name: row.child_name, isJumper: true }];
+  }
+  const attendeesJson = JSON.stringify(initialAttendees);
   const errHtml = error ? `<div class="flash flash-error">${escapeHtml(error)}</div>` : '';
 
   return `<!doctype html>
@@ -394,8 +398,6 @@ ${STYLES}
         <option value="false" ${!row.attending ? 'selected' : ''}>No</option>
       </select>
 
-      <label for="child_name">Invited child's name</label>
-      <input type="text" id="child_name" name="child_name" value="${escapeAttr(row.child_name)}" />
     </div>
 
     <div class="card">
@@ -581,7 +583,13 @@ function namesMatch(a, b) {
   if (a.toLowerCase().trim() === b.toLowerCase().trim()) return true;
   const aw = nameWords(a);
   const bw = nameWords(b);
-  return aw.some((w) => bw.includes(w));
+  // Require at least 2 words in common so shared surnames alone don't cause false matches
+  const shared = aw.filter((w) => bw.includes(w));
+  if (shared.length >= 2) return true;
+  // Single-word names: the one word must appear in the other
+  if (aw.length === 1 && bw.includes(aw[0])) return true;
+  if (bw.length === 1 && aw.includes(bw[0])) return true;
+  return false;
 }
 
 function computeNotResponded(inviteList, rsvpRows) {
@@ -794,7 +802,6 @@ export default async function handler(req, res) {
 
     const attending = String(body.attending) === 'true';
     const contact = asStringOrNull(body.contact) || '';
-    const childName = asStringOrNull(body.child_name);
     const notes = asStringOrNull(body.notes);
     const messageToRayyan = asStringOrNull(body.message_to_rayyan);
 
@@ -815,7 +822,7 @@ export default async function handler(req, res) {
 
     const totalPeople = attendees.length;
     const totalJumpers = attendees.filter((a) => a.isJumper).length;
-    const attendeesJson = JSON.stringify(attendees);
+    const derivedChildName = attendees.length > 0 ? attendees[0].name : null;
 
     try {
       await sql`
@@ -823,8 +830,8 @@ export default async function handler(req, res) {
           attending = ${attending},
           parent_name = ${parentName},
           contact = ${contact},
-          child_name = ${childName},
-          attendees = ${attendeesJson}::jsonb,
+          child_name = ${derivedChildName},
+          attendees = ${sql.json(attendees)},
           total_people = ${totalPeople},
           total_jumpers = ${totalJumpers},
           notes = ${notes},

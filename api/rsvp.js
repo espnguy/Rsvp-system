@@ -332,8 +332,6 @@ export default async function handler(req, res) {
   const childName = input.childName ? input.childName.trim() : null;
   const notes = input.notes ? input.notes.trim() : null;
   const messageToRayyan = input.messageToRayyan ? input.messageToRayyan.trim() : null;
-  const attendeesJson = JSON.stringify(attendees);
-
   try {
     await ensureSchema();
     const sql = getSql();
@@ -354,7 +352,7 @@ export default async function handler(req, res) {
           parent_name = ${parentName},
           contact = ${contact},
           child_name = ${childName},
-          attendees = ${attendeesJson}::jsonb,
+          attendees = ${sql.json(attendees)},
           total_people = ${totalPeople},
           total_jumpers = ${totalJumpers},
           notes = ${notes},
@@ -376,7 +374,7 @@ export default async function handler(req, res) {
            total_people, total_jumpers, notes, message_to_rayyan, edit_token, recognized)
         VALUES
           (${attending}, ${parentName}, ${contact}, ${childName},
-           ${attendeesJson}::jsonb, ${totalPeople}, ${totalJumpers},
+           ${sql.json(attendees)}, ${totalPeople}, ${totalJumpers},
            ${notes}, ${messageToRayyan}, ${newToken}, ${recognized})
         RETURNING id, created_at, updated_at, attending, parent_name, contact,
                   child_name, attendees, notes, message_to_rayyan

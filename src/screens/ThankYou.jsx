@@ -64,33 +64,31 @@ export default function ThankYou({ data }) {
           </div>
         </section>
 
-        {PARTY.waiverUrl && childCount > 0 && (
-          <section className="warn-card space-y-2" aria-labelledby="waiver-heading">
+        {PARTY.waiverUrl && (
+          <section className="warn-card space-y-3" aria-labelledby="waiver-heading">
             <div className="flex items-start gap-2">
               <span className="text-xl leading-none" aria-hidden="true">⚠️</span>
               <div>
                 <h2 id="waiver-heading" className="font-bold text-base">
-                  Waiver required
+                  Waiver required — sign before you arrive
                 </h2>
                 <p className="text-sm leading-snug mt-1">
-                  The venue requires a signed waiver before arrival for anyone jumping.
-                  Sign it now so there's no hold-up at the door.
+                  Cloudbound requires every guest to have a signed waiver on file.
+                  You will <strong>not be able to enter</strong> without one — sign it
+                  now to skip the line at the door.
                 </p>
               </div>
             </div>
+            <BrickButton
+              color="red"
+              as="a"
+              href={PARTY.waiverUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Sign the Cloudbound waiver →
+            </BrickButton>
           </section>
-        )}
-
-        {PARTY.waiverUrl && (
-          <BrickButton
-            color="red"
-            as="a"
-            href={PARTY.waiverUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Sign the jump waiver →
-          </BrickButton>
         )}
 
         <section className="card text-sm text-gray-700 space-y-1">

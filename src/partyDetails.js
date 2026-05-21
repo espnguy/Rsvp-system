@@ -10,5 +10,5 @@ export const PARTY = {
   calendarUrl: '/rayyan-birthday.ics',
   hostName: 'Mustafa and Shazia',
   hostPhone: '214-435-1676',
-  waiverUrl: null,
+  waiverUrl: 'https://waiver.haveablast.roller.app/CloudboundFriscoPrestonRidge/home',
 };

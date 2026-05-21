@@ -41,6 +41,7 @@ async function ensureSchema() {
   `;
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS edit_token TEXT`;
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS recognized BOOLEAN`;
   await sql`
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,
@@ -169,6 +170,27 @@ async function loadByToken(sql, token) {
     FROM rsvps WHERE edit_token = ${token} LIMIT 1
   `;
   return rows[0] || null;
+}
+
+async function getInviteList(sql) {
+  try {
+    const rows = await sql`SELECT value FROM app_settings WHERE key = 'invite_list' LIMIT 1`;
+    const v = rows[0] && rows[0].value;
+    return v ? JSON.parse(v) : [];
+  } catch {
+    return [];
+  }
+}
+
+function matchesInviteList(name, list) {
+  if (!list || list.length === 0) return null;
+  const words = (n) => n.toLowerCase().trim().split(/[\s\-]+/).filter((w) => w.length >= 4);
+  const nameNorm = name.toLowerCase().trim();
+  const nameWords = words(name);
+  return list.some((invited) => {
+    if (invited.toLowerCase().trim() === nameNorm) return true;
+    return words(invited).some((w) => nameWords.includes(w));
+  });
 }
 
 async function getNotificationEmail(sql) {
@@ -316,6 +338,9 @@ export default async function handler(req, res) {
     await ensureSchema();
     const sql = getSql();
 
+    const inviteList = await getInviteList(sql);
+    const recognized = matchesInviteList(parentName, inviteList);
+
     const existingToken = readEditToken(req);
     const existingRow = await loadByToken(sql, existingToken);
 
@@ -334,6 +359,7 @@ export default async function handler(req, res) {
           total_jumpers = ${totalJumpers},
           notes = ${notes},
           message_to_rayyan = ${messageToRayyan},
+          recognized = ${recognized},
           updated_at = NOW()
         WHERE id = ${existingRow.id}
         RETURNING id, created_at, updated_at, attending, parent_name, contact,
@@ -347,11 +373,11 @@ export default async function handler(req, res) {
       const rows = await sql`
         INSERT INTO rsvps
           (attending, parent_name, contact, child_name, attendees,
-           total_people, total_jumpers, notes, message_to_rayyan, edit_token)
+           total_people, total_jumpers, notes, message_to_rayyan, edit_token, recognized)
         VALUES
           (${attending}, ${parentName}, ${contact}, ${childName},
            ${attendeesJson}::jsonb, ${totalPeople}, ${totalJumpers},
-           ${notes}, ${messageToRayyan}, ${newToken})
+           ${notes}, ${messageToRayyan}, ${newToken}, ${recognized})
         RETURNING id, created_at, updated_at, attending, parent_name, contact,
                   child_name, attendees, notes, message_to_rayyan
       `;

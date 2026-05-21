@@ -178,6 +178,11 @@ const STYLES = `
   .login-wrap { max-width: 420px; margin: 0 auto; padding: 24px 16px; }
   .login-title { display: block; font-weight: 700; font-family: 'Fredoka', system-ui, sans-serif; font-size: 22px; color: var(--blue); margin: 4px 0 12px; }
   .login-sub { color:#555; font-size: 14px; margin-bottom: 16px; }
+  .tag-red { background: #fbeaea; color: var(--red); }
+  .invite-item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0ede8; gap:8px; }
+  .invite-item:last-child { border-bottom:none; }
+  .not-responded-card { background:#fff8f0; border:1px solid #f5c6a0; border-left:4px solid #e67e22; border-radius:10px; padding:14px 18px; margin-bottom:14px; }
+  .pill-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   @media (max-width: 640px) {
     th, td { font-size: 13px; padding: 8px; }
     .stat .n { font-size: 18px; }
@@ -222,14 +227,14 @@ ${STYLES}
 </html>`;
 }
 
-function listPage({ rows, totals, flash, settings, resendConfigured }) {
+function listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded }) {
   const flashHtml = flash
     ? `<div class="flash flash-${flash.type}">${escapeHtml(flash.message)}</div>`
     : '';
 
   const notifEmail = (settings && settings.notification_email) || '';
   const notifStatus = !resendConfigured
-    ? '<span class="muted small">⚠️ Set the <code>RESEND_API_KEY</code> env var in Vercel to enable email alerts.</span>'
+    ? '<span class="muted small">⚠️ Set the <code>RESEND_API_KEY</code> env var in Railway to enable email alerts.</span>'
     : notifEmail
       ? `<span class="muted small">Alerts go to <b>${escapeHtml(notifEmail)}</b> when a parent submits or updates an RSVP.</span>`
       : '<span class="muted small">No alerts yet. Enter an email above to start receiving them.</span>';
@@ -242,7 +247,7 @@ function listPage({ rows, totals, flash, settings, resendConfigured }) {
         <tr class="${r.attending ? 'yes' : 'no'}">
           <td class="nowrap">${escapeHtml(fmtDate(r.created_at))}</td>
           <td>
-            <div class="who">${escapeHtml(r.parent_name)}</div>
+            <div class="who">${escapeHtml(r.parent_name)}${r.recognized === false && inviteList.length > 0 ? ' <span class="tag tag-red" title="Not on invite list">🚩 Unknown</span>' : ''}</div>
             <div class="muted small">${escapeHtml(r.contact) || '<span class="muted">—</span>'}</div>
           </td>
           <td>${
@@ -285,6 +290,34 @@ ${STYLES}
 </header>
 <main>
   ${flashHtml}
+
+  <div class="card" style="margin-bottom:14px">
+    <b style="font-size:14px">Invite list</b>
+    <p class="muted small" style="margin:4px 0 10px">RSVPs from names not on this list are flagged 🚩. Names with no RSVP show in "Not responded yet" below.</p>
+    <form method="post" action="/admin?action=add-invite" style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" name="name" placeholder="Full name, e.g. Sarah Johnson" style="flex:1;font-size:14px;padding:8px 10px" required />
+      <button type="submit" class="btn btn-edit" style="white-space:nowrap">Add</button>
+    </form>
+    ${inviteList.length === 0
+      ? '<p class="muted small">No names added yet.</p>'
+      : `<div>${inviteList.map((name) => `
+        <div class="invite-item">
+          <span style="font-size:14px">${escapeHtml(name)}</span>
+          <form method="post" action="/admin?action=remove-invite" style="margin:0">
+            <input type="hidden" name="name" value="${escapeAttr(name)}" />
+            <button class="btn btn-delete" style="padding:4px 8px;font-size:11px">Remove</button>
+          </form>
+        </div>`).join('')}</div>`
+    }
+  </div>
+
+  ${notResponded.length > 0 ? `
+  <div class="not-responded-card">
+    <b style="font-size:14px">⏳ Not responded yet (${notResponded.length})</b>
+    <div class="pill-list">
+      ${notResponded.map((name) => `<span class="badge badge-gray">${escapeHtml(name)}</span>`).join('')}
+    </div>
+  </div>` : ''}
 
   <div class="card" style="margin-bottom:14px">
     <form method="post" action="/admin?action=save-settings" style="margin:0">
@@ -476,7 +509,7 @@ async function loadAllRows(sql) {
   try {
     const rows = await sql`
       SELECT id, created_at, attending, parent_name, contact, child_name,
-             attendees, total_people, total_jumpers, notes, message_to_rayyan
+             attendees, total_people, total_jumpers, notes, message_to_rayyan, recognized
       FROM rsvps
       ORDER BY created_at DESC
     `;
@@ -519,6 +552,42 @@ async function saveSetting(sql, key, value) {
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `;
   }
+}
+
+async function getInviteList(sql) {
+  try {
+    const rows = await sql`SELECT value FROM app_settings WHERE key = 'invite_list' LIMIT 1`;
+    const v = rows[0] && rows[0].value;
+    return v ? JSON.parse(v) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveInviteList(sql, list) {
+  await ensureSettingsTable(sql);
+  const value = JSON.stringify(list);
+  await sql`
+    INSERT INTO app_settings (key, value) VALUES ('invite_list', ${value})
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+  `;
+}
+
+function nameWords(n) {
+  return n.toLowerCase().trim().split(/[\s\-]+/).filter((w) => w.length >= 4);
+}
+
+function namesMatch(a, b) {
+  if (a.toLowerCase().trim() === b.toLowerCase().trim()) return true;
+  const aw = nameWords(a);
+  const bw = nameWords(b);
+  return aw.some((w) => bw.includes(w));
+}
+
+function computeNotResponded(inviteList, rsvpRows) {
+  return inviteList.filter(
+    (invited) => !rsvpRows.some((r) => namesMatch(r.parent_name, invited))
+  );
 }
 
 function computeTotals(rows) {
@@ -641,6 +710,34 @@ export default async function handler(req, res) {
   }
 
   const id = q.id ? Number.parseInt(q.id, 10) : null;
+
+  if (req.method === 'POST' && action === 'add-invite') {
+    const body = parseBody(req);
+    const name = asStringOrNull(body.name);
+    if (!name) return redirect(res, '/admin', { type: 'error', message: 'Name cannot be empty.' });
+    try {
+      const list = await getInviteList(sql);
+      if (!list.includes(name)) {
+        list.push(name);
+        await saveInviteList(sql, list);
+      }
+      return redirect(res, '/admin', { type: 'success', message: `Added "${name}" to invite list.` });
+    } catch (err) {
+      return htmlError(res, 500, 'Save failed', err.message);
+    }
+  }
+
+  if (req.method === 'POST' && action === 'remove-invite') {
+    const body = parseBody(req);
+    const name = asStringOrNull(body.name);
+    try {
+      const list = await getInviteList(sql);
+      await saveInviteList(sql, list.filter((n) => n !== name));
+      return redirect(res, '/admin', { type: 'success', message: `Removed "${name}" from invite list.` });
+    } catch (err) {
+      return htmlError(res, 500, 'Save failed', err.message);
+    }
+  }
 
   if (req.method === 'POST' && action === 'save-settings') {
     const body = parseBody(req);
@@ -765,18 +862,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [rows, settings] = await Promise.all([
+    const [rows, settings, inviteList] = await Promise.all([
       loadAllRows(sql),
       loadSettings(sql),
+      getInviteList(sql),
     ]);
     const totals = computeTotals(rows);
+    const notResponded = computeNotResponded(inviteList, rows);
     const flash = parseFlash(q.flash);
     const resendConfigured = !!process.env.RESEND_API_KEY;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     return res
       .status(200)
-      .send(listPage({ rows, totals, flash, settings, resendConfigured }));
+      .send(listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded }));
   } catch (err) {
     console.error('Admin query failed:', err);
     return htmlError(res, 500, 'Error loading RSVPs', err.message);

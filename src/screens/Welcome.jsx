@@ -1,12 +1,20 @@
+import BrickHeader from '../components/BrickHeader.jsx';
 import BrickButton from '../components/BrickButton.jsx';
 import { PARTY } from '../partyDetails.js';
 
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="w-full overflow-hidden" aria-hidden="true">
-        <img src="/IMG_6281.jpg" alt="" className="block" style={{ width: '118%', marginLeft: '-9%' }} />
-      </div>
+      <BrickHeader
+        color="#F44336"
+        images={[
+          { src: '/elmo-44.png', height: 78 },
+          { src: '/cookie-monster.png', height: 78 },
+          { src: '/abby.png', height: 82 },
+          { src: '/bigbird-removebg-preview.png', height: 90 },
+          { src: '/bert-ernie.png', height: 80 },
+        ]}
+      />
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         {existingRsvp && (
@@ -35,6 +43,24 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
             </button>
           </div>
         )}
+
+        <header className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-lego-blue mb-2">
+            You're invited!
+          </p>
+          <h1
+            className="display text-[64px] text-lego-red"
+            style={{ WebkitTextStroke: '1px #0D47A1' }}
+          >
+            RAYYAN
+          </h1>
+          <p className="display text-lego-blue text-2xl mt-1">
+            is turning {PARTY.age}! <span aria-hidden="true">🎂</span>
+          </p>
+          <p className="mt-1 text-sm text-gray-500 italic">
+            Brought to you by the number {PARTY.age}!
+          </p>
+        </header>
 
         <section className="card space-y-3">
           <Detail

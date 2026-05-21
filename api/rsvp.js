@@ -128,14 +128,7 @@ const RsvpSchema = z
           path: ['contact'],
         });
       }
-      if (!data.childName || !data.childName.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Child's name is required.",
-          path: ['childName'],
-        });
-      }
-      if (!data.attendees || data.attendees.length === 0) {
+if (!data.attendees || data.attendees.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'At least one attendee is required.',

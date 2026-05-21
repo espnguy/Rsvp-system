@@ -54,7 +54,7 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
   const validate = () => {
     if (!parentName.trim()) return 'Please enter your name.';
     if (!contact.trim()) return 'Please enter a phone number or email.';
-    if (!childName.trim()) return "Please enter the invited child's name.";
+    if (attendees.length === 0) return 'Please add at least one guest.';
     for (const e of extras) {
       if (!e.name.trim()) return 'Each added guest needs a name (or remove the row).';
     }
@@ -145,11 +145,10 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
 
           <div className="card space-y-3">
             <Input
-              label="Invited child's name"
+              label="Who's coming? (first guest)"
               value={childName}
               onChange={setChildName}
-              placeholder="e.g. Max"
-              required
+              placeholder="e.g. Max, yourself, a sibling…"
               autoComplete="off"
               name="childName"
             />
@@ -158,7 +157,7 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
               <JumperToggle
                 value={childIsJumper}
                 onChange={setChildIsJumper}
-                ariaLabel="Invited child or adult"
+                ariaLabel="Child or adult"
               />
             </div>
           </div>

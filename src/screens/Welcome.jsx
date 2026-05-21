@@ -4,8 +4,8 @@ import { PARTY } from '../partyDetails.js';
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="w-full" aria-hidden="true">
-        <img src="/IMG_6281.jpg" alt="" className="w-full" />
+      <div className="w-full overflow-hidden" aria-hidden="true">
+        <img src="/IMG_6281.jpg" alt="" className="block" style={{ width: '118%', marginLeft: '-9%' }} />
       </div>
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">

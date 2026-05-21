@@ -108,8 +108,8 @@ function attendeesHtml(rows) {
   return rows
     .map((a) => {
       const tag = a.isJumper
-        ? '<span class="tag tag-blue">🦘 Jumper</span>'
-        : '<span class="tag tag-gray">Non-jumper</span>';
+        ? '<span class="tag tag-blue">👧 Child</span>'
+        : '<span class="tag tag-gray">Adult</span>';
       return `<div class="attendee">${escapeHtml(a.name)} ${tag}</div>`;
     })
     .join('');
@@ -301,7 +301,7 @@ ${STYLES}
     <div class="stat"><div class="n">${totals.yes}</div><div class="l">Saying yes</div></div>
     <div class="stat"><div class="n">${totals.no}</div><div class="l">Saying no</div></div>
     <div class="stat"><div class="n">${totals.people}</div><div class="l">Total people</div></div>
-    <div class="stat"><div class="n">${totals.jumpers}</div><div class="l">Total jumpers</div></div>
+    <div class="stat"><div class="n">${totals.jumpers}</div><div class="l">Total children</div></div>
   </div>
   <table>
     <thead>
@@ -410,9 +410,9 @@ ${STYLES}
 
       var jumperSelect = document.createElement('select');
       var optJ = document.createElement('option');
-      optJ.value = 'true'; optJ.textContent = '🦘 Jumper';
+      optJ.value = 'true'; optJ.textContent = '👧 Child';
       var optN = document.createElement('option');
-      optN.value = 'false'; optN.textContent = 'Non-jumper';
+      optN.value = 'false'; optN.textContent = 'Adult';
       jumperSelect.appendChild(optJ);
       jumperSelect.appendChild(optN);
       jumperSelect.value = a.isJumper ? 'true' : 'false';

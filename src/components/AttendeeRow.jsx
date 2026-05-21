@@ -36,11 +36,11 @@ export default function AttendeeRow({
         )}
       </div>
       <div>
-        <span className="brick-label">{label || 'Jumper?'}</span>
+        <span className="brick-label">{label || 'Child or adult?'}</span>
         <JumperToggle
           value={attendee.isJumper}
           onChange={(isJumper) => onChange({ ...attendee, isJumper })}
-          ariaLabel={`${attendee.name || `Guest ${index + 1}`} jumper status`}
+          ariaLabel={`${attendee.name || `Guest ${index + 1}`} child or adult`}
         />
       </div>
     </div>

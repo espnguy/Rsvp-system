@@ -4,7 +4,7 @@ import { PARTY } from '../partyDetails.js';
 
 export default function ThankYou({ data }) {
   const attendees = data?.attendees || [];
-  const jumperCount = attendees.filter((a) => a.isJumper).length;
+  const childCount = attendees.filter((a) => a.isJumper).length;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -53,18 +53,18 @@ export default function ThankYou({ data }) {
                       : 'text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700'
                   }
                 >
-                  {a.isJumper ? '🦘 Jumper' : 'Non-jumper'}
+                  {a.isJumper ? '👧 Child' : 'Adult'}
                 </span>
               </li>
             ))}
           </ul>
 
           <div className="text-sm text-gray-600 pt-1">
-            {attendees.length} total · {jumperCount} jumping
+            {attendees.length} total · {childCount} children
           </div>
         </section>
 
-        {PARTY.waiverUrl && jumperCount > 0 && (
+        {PARTY.waiverUrl && childCount > 0 && (
           <section className="warn-card space-y-2" aria-labelledby="waiver-heading">
             <div className="flex items-start gap-2">
               <span className="text-xl leading-none" aria-hidden="true">⚠️</span>

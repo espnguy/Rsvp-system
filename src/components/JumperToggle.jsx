@@ -3,7 +3,7 @@ export default function JumperToggle({ value, onChange, ariaLabel }) {
     <div
       className="seg"
       role="group"
-      aria-label={ariaLabel || 'Jumper or non-jumper'}
+      aria-label={ariaLabel || 'Child or adult'}
     >
       <button
         type="button"
@@ -11,7 +11,7 @@ export default function JumperToggle({ value, onChange, ariaLabel }) {
         aria-pressed={value === true}
         onClick={() => onChange(true)}
       >
-        <span aria-hidden="true">🦘</span> Jumper
+        <span aria-hidden="true">👧</span> Child
       </button>
       <button
         type="button"
@@ -19,7 +19,7 @@ export default function JumperToggle({ value, onChange, ariaLabel }) {
         aria-pressed={value === false}
         onClick={() => onChange(false)}
       >
-        Non-jumper
+        Adult
       </button>
     </div>
   );

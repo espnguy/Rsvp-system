@@ -199,7 +199,7 @@ async function notifyHost(sql, rsvp, mode) {
   const attendeesList =
     Array.isArray(rsvp.attendees) && rsvp.attendees.length
       ? rsvp.attendees
-          .map((a) => `${a.name}${a.isJumper ? ' (jumper)' : ' (non-jumper)'}`)
+          .map((a) => `${a.name}${a.isJumper ? ' (child)' : ' (adult)'}`)
           .join(', ')
       : '—';
 

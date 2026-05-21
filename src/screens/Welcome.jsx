@@ -5,16 +5,9 @@ import { PARTY } from '../partyDetails.js';
 export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <BrickHeader
-        color="#F44336"
-        images={[
-          { src: '/elmo-44.png', height: 78 },
-          { src: '/cookie-monster.png', height: 78 },
-          { src: '/abby.png', height: 82 },
-          { src: '/bigbird-removebg-preview.png', height: 90 },
-          { src: '/bert-ernie.png', height: 80 },
-        ]}
-      />
+      <div className="w-full overflow-hidden" style={{ height: 220 }} aria-hidden="true">
+        <img src="/IMG_6281.jpg" alt="" className="w-full h-full object-cover object-top" />
+      </div>
 
       <main className="flex-1 px-5 pt-6 pb-10 space-y-5">
         {existingRsvp && (

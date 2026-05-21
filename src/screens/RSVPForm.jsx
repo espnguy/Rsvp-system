@@ -154,11 +154,11 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
               name="childName"
             />
             <div>
-              <span className="brick-label">Jumper?</span>
+              <span className="brick-label">Child or adult?</span>
               <JumperToggle
                 value={childIsJumper}
                 onChange={setChildIsJumper}
-                ariaLabel="Invited child jumper status"
+                ariaLabel="Invited child or adult"
               />
             </div>
           </div>

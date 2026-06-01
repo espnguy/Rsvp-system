@@ -66,11 +66,12 @@ function safePasswordMatch(provided, expected) {
   return crypto.timingSafeEqual(a, b);
 }
 
-function setAuthCookie(res, password) {
+function setAuthCookie(res, password, secure) {
   const token = computeToken(password);
+  const secureAttr = secure ? '; Secure' : '';
   res.setHeader(
     'Set-Cookie',
-    `${COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE}`
+    `${COOKIE_NAME}=${token}; HttpOnly${secureAttr}; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE}`
   );
 }
 
@@ -693,7 +694,8 @@ export default async function handler(req, res) {
     const body = parseBody(req);
     const provided = (body && body.password) || '';
     if (safePasswordMatch(provided, expected)) {
-      setAuthCookie(res, expected);
+      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+      setAuthCookie(res, expected, isSecure);
       return redirect(res, '/admin');
     }
     return renderLogin(res, 401, 'Wrong password. Try again.');

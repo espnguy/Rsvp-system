@@ -104,6 +104,7 @@ function fmtDate(d) {
   });
 }
 
+
 function attendeesHtml(rows) {
   if (!Array.isArray(rows) || rows.length === 0) return '<span class="muted">—</span>';
   return rows
@@ -711,6 +712,11 @@ export default async function handler(req, res) {
   }
 
   // --- AUTHED BELOW ---
+
+  // Authenticated user submitted the login form (e.g., browser back/forward cache showing stale login page)
+  if (req.method === 'POST' && !action) {
+    return redirect(res, '/admin');
+  }
 
   let sql;
   try {

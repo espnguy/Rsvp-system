@@ -185,6 +185,18 @@ const STYLES = `
   .invite-item:last-child { border-bottom:none; }
   .not-responded-card { background:#fff8f0; border:1px solid #f5c6a0; border-left:4px solid #e67e22; border-radius:10px; padding:14px 18px; margin-bottom:14px; }
   .pill-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .radio-group { display:flex; flex-direction:column; gap:10px; margin:10px 0; }
+  .radio-group label { display:flex; align-items:center; gap:10px; font-weight:400; margin:0; cursor:pointer; font-size:14px; }
+  .radio-group input[type=radio] { width:auto; accent-color: var(--blue); flex-shrink:0; }
+  .radio-count { background:#eee; border-radius:9999px; padding:1px 8px; font-size:12px; font-weight:600; color:#555; }
+  .btn-sms { background: var(--green); color:#fff; border-color: var(--green); padding: 10px 16px; font-size: 14px; }
+  .btn-sms:hover { background: #1a5e32; border-color: #1a5e32; }
+  .sms-result-row td { vertical-align:middle; }
+  .result-success { color: var(--green); font-weight:600; }
+  .result-fail { color: var(--red); font-weight:600; }
+  .invitee-status-yes { color: var(--green); font-weight:600; font-size:12px; }
+  .invitee-status-no { color:#888; font-weight:600; font-size:12px; }
+  .invitee-status-pending { color:#b06000; font-weight:600; font-size:12px; }
   @media (max-width: 640px) {
     th, td { font-size: 13px; padding: 8px; }
     .stat .n { font-size: 18px; }
@@ -229,7 +241,7 @@ ${STYLES}
 </html>`;
 }
 
-function listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded }) {
+function listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, invitees, textbeltConfigured }) {
   const flashHtml = flash
     ? `<div class="flash flash-${flash.type}">${escapeHtml(flash.message)}</div>`
     : '';
@@ -331,6 +343,81 @@ ${STYLES}
       <div style="margin-top:6px">${notifStatus}</div>
     </form>
   </div>
+
+  ${(function() {
+    const allCount = invitees.filter(i => i.phone_number).length;
+    const pendingCount = invitees.filter(i => i.phone_number && i.status === 'pending').length;
+    const respondedCount = invitees.filter(i => i.phone_number && i.status !== 'pending').length;
+    const inviteesRowsHtml = invitees.length === 0
+      ? '<p class="muted small" style="margin:8px 0 0">No invitees added yet.</p>'
+      : `<table class="invitee-table" style="margin-top:10px">
+          <thead><tr><th>Name</th><th>Phone</th><th>RSVP Status</th><th></th></tr></thead>
+          <tbody>${invitees.map(inv => `
+            <tr>
+              <td style="font-size:14px">${escapeHtml(inv.name)}</td>
+              <td style="font-size:14px">${inv.phone_number ? escapeHtml(inv.phone_number) : '<span class="muted">—</span>'}</td>
+              <td>${
+                inv.status === 'yes'
+                  ? '<span class="invitee-status-yes">✓ RSVPd yes</span>'
+                  : inv.status === 'no'
+                  ? '<span class="invitee-status-no">✗ RSVPd no</span>'
+                  : '<span class="invitee-status-pending">⏳ Pending</span>'
+              }</td>
+              <td>
+                <form method="post" action="/admin?action=remove-invitee" style="margin:0">
+                  <input type="hidden" name="invitee_id" value="${escapeAttr(String(inv.id))}" />
+                  <button class="btn btn-delete" style="padding:3px 8px;font-size:11px" type="submit">Remove</button>
+                </form>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    const smsWarning = !textbeltConfigured
+      ? '<div class="flash flash-error" style="margin-top:10px">Set the <code>TEXTBELT_API_KEY</code> env var to enable sending.</div>'
+      : '';
+    return `
+  <div class="card" style="margin-bottom:14px">
+    <b style="font-size:14px">📱 Phone Invitees</b>
+    <p class="muted small" style="margin:4px 0 10px">Add invitees with phone numbers to send text reminders. RSVP status is matched automatically by name.</p>
+    <form method="post" action="/admin?action=add-invitee" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input type="text" name="name" placeholder="Full name" style="flex:1 1 180px;font-size:14px;padding:8px 10px" required />
+      <input type="text" name="phone" placeholder="Phone, e.g. 5551234567" style="flex:1 1 160px;font-size:14px;padding:8px 10px" />
+      <button type="submit" class="btn btn-edit" style="white-space:nowrap">Add</button>
+    </form>
+    ${inviteesRowsHtml}
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <b style="font-size:14px">💬 Send Text Reminders</b>
+    ${smsWarning}
+    <form method="post" action="/admin?action=send-sms" style="margin-top:10px" onsubmit="return confirm('Send texts to the selected group?');">
+      <label style="margin-top:0">Recipients</label>
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="group" value="all" checked />
+          All invitees with a phone
+          <span class="radio-count">${allCount}</span>
+        </label>
+        <label>
+          <input type="radio" name="group" value="pending" />
+          Not responded yet
+          <span class="radio-count">${pendingCount}</span>
+        </label>
+        <label>
+          <input type="radio" name="group" value="responded" />
+          Have RSVPd (yes or no)
+          <span class="radio-count">${respondedCount}</span>
+        </label>
+      </div>
+      <label>Message</label>
+      <textarea name="message" rows="3" placeholder="Hi! Just a reminder about Rayyan's birthday party this Saturday…" required></textarea>
+      <div class="actions" style="margin-top:10px">
+        <button type="submit" class="btn btn-sms" ${!textbeltConfigured ? 'disabled' : ''}>Send texts</button>
+        <span class="muted small">Each text costs ~$0.01 via Textbelt.</span>
+      </div>
+    </form>
+  </div>`;
+  })()}
 
   <div class="totals">
     <div class="stat"><div class="n">${totals.yes}</div><div class="l">Saying yes</div></div>
@@ -492,6 +579,91 @@ ${STYLES}
   });
 })();
 </script>
+</body>
+</html>`;
+}
+
+async function ensureInviteesTable(sql) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS invitees (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone_number TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+}
+
+async function getInvitees(sql) {
+  try {
+    await ensureInviteesTable(sql);
+    return await sql`SELECT id, name, phone_number FROM invitees ORDER BY created_at ASC`;
+  } catch {
+    return [];
+  }
+}
+
+async function sendSmsViaTextbelt(phone, message, apiKey) {
+  const resp = await fetch('https://textbelt.com/text', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, message, key: apiKey }),
+  });
+  if (!resp.ok) throw new Error(`Textbelt HTTP ${resp.status}`);
+  return await resp.json();
+}
+
+function smsResultPage({ results, message, group }) {
+  const succeeded = results.filter((r) => r.success).length;
+  const failed = results.length - succeeded;
+  const groupLabel = group === 'pending' ? 'not responded yet' : group === 'responded' ? 'have RSVPd' : 'all invitees';
+  const rowsHtml = results.length === 0
+    ? `<tr><td colspan="3" class="empty">No recipients had a phone number in this group.</td></tr>`
+    : results.map((r) => `
+      <tr class="sms-result-row">
+        <td>${escapeHtml(r.name)}</td>
+        <td class="muted">${escapeHtml(r.phone)}</td>
+        <td>${r.success
+          ? '<span class="result-success">Sent</span>'
+          : `<span class="result-fail">Failed</span> <span class="muted small">${escapeHtml(r.error || '')}</span>`
+        }</td>
+      </tr>`).join('');
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SMS Results · Rayyan's Party</title>
+${STYLES}
+</head>
+<body>
+<header>
+  <div class="head-left">
+    <h1>Text Reminder Results</h1>
+    <div class="sub"><a class="back-link" href="/admin">← Back to admin</a></div>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <b style="font-size:14px">Sent to: ${escapeHtml(groupLabel)}</b>
+    <p class="muted small" style="margin:6px 0 0">Message: "${escapeHtml(message)}"</p>
+  </div>
+  <div class="totals" style="margin-bottom:14px">
+    <div class="stat"><div class="n">${results.length}</div><div class="l">Total sent</div></div>
+    <div class="stat"><div class="n" style="color:var(--green)">${succeeded}</div><div class="l">Delivered</div></div>
+    ${failed > 0 ? `<div class="stat"><div class="n" style="color:var(--red)">${failed}</div><div class="l">Failed</div></div>` : ''}
+  </div>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Phone</th><th>Result</th></tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+  <div style="margin-top:14px">
+    <a class="btn btn-edit" href="/admin">← Back to admin</a>
+  </div>
+</main>
 </body>
 </html>`;
 }
@@ -856,6 +1028,75 @@ export default async function handler(req, res) {
     }
   }
 
+  if (req.method === 'POST' && action === 'add-invitee') {
+    const body = parseBody(req);
+    const name = asStringOrNull(body.name);
+    const phone = asStringOrNull(body.phone);
+    if (!name) return redirect(res, '/admin', { type: 'error', message: 'Name cannot be empty.' });
+    try {
+      await ensureInviteesTable(sql);
+      await sql`INSERT INTO invitees (name, phone_number) VALUES (${name}, ${phone})`;
+      return redirect(res, '/admin', { type: 'success', message: `Added "${name}" to invitees.` });
+    } catch (err) {
+      return htmlError(res, 500, 'Save failed', err.message);
+    }
+  }
+
+  if (req.method === 'POST' && action === 'remove-invitee') {
+    const body = parseBody(req);
+    const invId = Number.parseInt(body.invitee_id, 10);
+    if (!invId || Number.isNaN(invId)) {
+      return redirect(res, '/admin', { type: 'error', message: 'Invalid invitee id.' });
+    }
+    try {
+      await ensureInviteesTable(sql);
+      await sql`DELETE FROM invitees WHERE id = ${invId}`;
+      return redirect(res, '/admin', { type: 'success', message: 'Invitee removed.' });
+    } catch (err) {
+      return htmlError(res, 500, 'Delete failed', err.message);
+    }
+  }
+
+  if (req.method === 'POST' && action === 'send-sms') {
+    const body = parseBody(req);
+    const message = asStringOrNull(body.message);
+    const group = body.group || 'all';
+    const apiKey = process.env.TEXTBELT_API_KEY;
+
+    if (!apiKey) {
+      return redirect(res, '/admin', { type: 'error', message: 'TEXTBELT_API_KEY is not configured.' });
+    }
+    if (!message) {
+      return redirect(res, '/admin', { type: 'error', message: 'Message cannot be empty.' });
+    }
+
+    try {
+      const [invitees, rsvpRows] = await Promise.all([getInvitees(sql), loadAllRows(sql)]);
+      let targets = invitees.filter((i) => i.phone_number);
+      if (group === 'pending') {
+        targets = targets.filter((i) => !rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
+      } else if (group === 'responded') {
+        targets = targets.filter((i) => rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
+      }
+
+      const results = [];
+      for (const t of targets) {
+        try {
+          const result = await sendSmsViaTextbelt(t.phone_number, message, apiKey);
+          results.push({ name: t.name, phone: t.phone_number, success: result.success, error: result.error });
+        } catch (err) {
+          results.push({ name: t.name, phone: t.phone_number, success: false, error: err.message });
+        }
+      }
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).send(smsResultPage({ results, message, group }));
+    } catch (err) {
+      return htmlError(res, 500, 'SMS send failed', err.message);
+    }
+  }
+
   if (req.method === 'GET' && action === 'edit') {
     if (!id || Number.isNaN(id)) return htmlError(res, 400, 'Bad request', 'Missing id.');
     try {
@@ -877,20 +1118,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [rows, settings, inviteList] = await Promise.all([
+    const [rows, settings, inviteList, rawInvitees] = await Promise.all([
       loadAllRows(sql),
       loadSettings(sql),
       getInviteList(sql),
+      getInvitees(sql),
     ]);
     const totals = computeTotals(rows);
     const notResponded = computeNotResponded(inviteList, rows);
+    const invitees = rawInvitees.map((inv) => {
+      const match = rows.find((r) => namesMatch(r.parent_name, inv.name));
+      const status = match ? (match.attending ? 'yes' : 'no') : 'pending';
+      return { ...inv, status };
+    });
     const flash = parseFlash(q.flash);
     const resendConfigured = !!process.env.RESEND_API_KEY;
+    const textbeltConfigured = !!process.env.TEXTBELT_API_KEY;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     return res
       .status(200)
-      .send(listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded }));
+      .send(listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, invitees, textbeltConfigured }));
   } catch (err) {
     console.error('Admin query failed:', err);
     return htmlError(res, 500, 'Error loading RSVPs', err.message);

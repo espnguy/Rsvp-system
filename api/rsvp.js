@@ -48,6 +48,14 @@ async function ensureSchema() {
       value TEXT
     )
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS invitees (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone_number TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
   schemaReady = true;
 }
 

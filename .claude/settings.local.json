@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Projects\\\\Rsvp-system\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Projects\\\\Rsvp-system\" -Force | Where-Object { $_.Name -notmatch '^node_modules$|^\\\\.git$' } | Format-List FullName, PSIsContainer)"
     ]
   }
 }

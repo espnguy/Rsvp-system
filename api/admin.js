@@ -347,7 +347,7 @@ ${STYLES}
   ${(function() {
     const allCount = invitees.filter(i => i.phone_number).length;
     const pendingCount = invitees.filter(i => i.phone_number && i.status === 'pending').length;
-    const respondedCount = invitees.filter(i => i.phone_number && i.status !== 'pending').length;
+    const respondedCount = invitees.filter(i => i.phone_number && i.status === 'yes').length;
     const inviteesRowsHtml = invitees.length === 0
       ? '<p class="muted small" style="margin:8px 0 0">No invitees added yet.</p>'
       : `<table class="invitee-table" style="margin-top:10px">
@@ -405,7 +405,7 @@ ${STYLES}
         </label>
         <label>
           <input type="radio" name="group" value="responded" />
-          Have RSVPd (yes or no)
+          RSVPd yes (attending)
           <span class="radio-count">${respondedCount}</span>
         </label>
       </div>
@@ -616,7 +616,7 @@ async function sendSmsViaTextbelt(phone, message, apiKey) {
 function smsResultPage({ results, message, group }) {
   const succeeded = results.filter((r) => r.success).length;
   const failed = results.length - succeeded;
-  const groupLabel = group === 'pending' ? 'not responded yet' : group === 'responded' ? 'have RSVPd' : 'all invitees';
+  const groupLabel = group === 'pending' ? 'not responded yet' : group === 'responded' ? 'RSVPd yes (attending)' : 'all invitees';
   const rowsHtml = results.length === 0
     ? `<tr><td colspan="3" class="empty">No recipients had a phone number in this group.</td></tr>`
     : results.map((r) => `
@@ -1076,7 +1076,7 @@ export default async function handler(req, res) {
       if (group === 'pending') {
         targets = targets.filter((i) => !rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
       } else if (group === 'responded') {
-        targets = targets.filter((i) => rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
+        targets = targets.filter((i) => rsvpRows.some((r) => namesMatch(r.parent_name, i.name) && r.attending));
       }
 
       const results = [];

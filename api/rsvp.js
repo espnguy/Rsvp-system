@@ -42,6 +42,10 @@ async function ensureSchema() {
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS edit_token TEXT`;
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ`;
   await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS recognized BOOLEAN`;
+  await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS phone TEXT`;
+  await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS email TEXT`;
+  // Make contact nullable so new records can omit it; old records keep their value
+  await sql`ALTER TABLE rsvps ALTER COLUMN contact DROP NOT NULL`.catch(() => {});
   await sql`
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,
@@ -121,7 +125,9 @@ const RsvpSchema = z
   .object({
     attending: z.boolean(),
     parentName: z.string().trim().min(1, 'Parent name is required.').max(200),
-    contact: nullableText(200),
+    phone: nullableText(200),
+    email: nullableText(200),
+    contact: nullableText(200), // legacy field, still accepted from old clients
     childName: nullableText(200),
     attendees: z.array(AttendeeSchema).max(20).optional().default([]),
     notes: nullableText(2000),
@@ -130,14 +136,15 @@ const RsvpSchema = z
   .strict()
   .superRefine((data, ctx) => {
     if (data.attending) {
-      if (!data.contact || !data.contact.trim()) {
+      const hasPhone = (data.phone && data.phone.trim()) || (data.contact && data.contact.trim());
+      if (!hasPhone) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Phone or email is required.',
-          path: ['contact'],
+          message: 'Phone number is required.',
+          path: ['phone'],
         });
       }
-if (!data.attendees || data.attendees.length === 0) {
+      if (!data.attendees || data.attendees.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'At least one attendee is required.',
@@ -160,7 +167,9 @@ function toClientRsvp(row) {
     id: row.id,
     attending: !!row.attending,
     parentName: row.parent_name || '',
-    contact: row.contact || '',
+    phone: row.phone || '',
+    email: row.email || '',
+    contact: row.contact || '', // legacy, kept for old edit sessions
     childName: row.child_name || '',
     attendees: Array.isArray(row.attendees) ? row.attendees : [],
     notes: row.notes || '',
@@ -173,7 +182,7 @@ function toClientRsvp(row) {
 async function loadByToken(sql, token) {
   if (!token) return null;
   const rows = await sql`
-    SELECT id, created_at, updated_at, attending, parent_name, contact,
+    SELECT id, created_at, updated_at, attending, parent_name, phone, email, contact,
            child_name, attendees, notes, message_to_rayyan
     FROM rsvps WHERE edit_token = ${token} LIMIT 1
   `;
@@ -195,7 +204,9 @@ function matchesInviteList(name, list) {
   const words = (n) => n.toLowerCase().trim().split(/[\s\-]+/).filter((w) => w.length >= 4);
   const nameNorm = name.toLowerCase().trim();
   const nameWords = words(name);
-  return list.some((invited) => {
+  return list.some((item) => {
+    const invited = typeof item === 'string' ? item : (item && item.name);
+    if (!invited) return false;
     if (invited.toLowerCase().trim() === nameNorm) return true;
     return words(invited).some((w) => nameWords.includes(w));
   });
@@ -233,7 +244,8 @@ async function notifyHost(sql, rsvp, mode) {
 
   const text = [
     `Parent: ${rsvp.parentName}`,
-    `Contact: ${rsvp.contact || '—'}`,
+    `Phone: ${rsvp.phone || rsvp.contact || '—'}`,
+    `Email: ${rsvp.email || '—'}`,
     `Attending: ${attending}`,
     `Child: ${rsvp.childName || '—'}`,
     `Attendees: ${attendeesList}`,
@@ -252,7 +264,8 @@ async function notifyHost(sql, rsvp, mode) {
       <h2 style="color:#0055BF;margin:0 0 8px">${esc(subject)}</h2>
       <table cellpadding="6" style="border-collapse:collapse;font-size:14px">
         <tr><td><b>Parent</b></td><td>${esc(rsvp.parentName)}</td></tr>
-        <tr><td><b>Contact</b></td><td>${esc(rsvp.contact) || '—'}</td></tr>
+        <tr><td><b>Phone</b></td><td>${esc(rsvp.phone || rsvp.contact) || '—'}</td></tr>
+        <tr><td><b>Email</b></td><td>${esc(rsvp.email) || '—'}</td></tr>
         <tr><td><b>Attending</b></td><td>${attending}</td></tr>
         <tr><td><b>Child</b></td><td>${esc(rsvp.childName) || '—'}</td></tr>
         <tr><td><b>Attendees</b></td><td>${esc(attendeesList)}</td></tr>
@@ -336,7 +349,8 @@ export default async function handler(req, res) {
   const totalJumpers = attendees.filter((a) => a.isJumper).length;
 
   const parentName = input.parentName.trim();
-  const contact = input.contact ? input.contact.trim() : '';
+  const phone = input.phone ? input.phone.trim() : (input.contact ? input.contact.trim() : null);
+  const email = input.email ? input.email.trim() : null;
   const childName = input.childName ? input.childName.trim() : null;
   const notes = input.notes ? input.notes.trim() : null;
   const messageToRayyan = input.messageToRayyan ? input.messageToRayyan.trim() : null;
@@ -358,7 +372,8 @@ export default async function handler(req, res) {
         UPDATE rsvps SET
           attending = ${attending},
           parent_name = ${parentName},
-          contact = ${contact},
+          phone = ${phone},
+          email = ${email},
           child_name = ${childName},
           attendees = ${sql.json(attendees)},
           total_people = ${totalPeople},
@@ -368,7 +383,7 @@ export default async function handler(req, res) {
           recognized = ${recognized},
           updated_at = NOW()
         WHERE id = ${existingRow.id}
-        RETURNING id, created_at, updated_at, attending, parent_name, contact,
+        RETURNING id, created_at, updated_at, attending, parent_name, phone, email, contact,
                   child_name, attendees, notes, message_to_rayyan
       `;
       savedRow = rows[0];
@@ -378,13 +393,13 @@ export default async function handler(req, res) {
       const newToken = crypto.randomBytes(24).toString('hex');
       const rows = await sql`
         INSERT INTO rsvps
-          (attending, parent_name, contact, child_name, attendees,
+          (attending, parent_name, phone, email, child_name, attendees,
            total_people, total_jumpers, notes, message_to_rayyan, edit_token, recognized)
         VALUES
-          (${attending}, ${parentName}, ${contact}, ${childName},
+          (${attending}, ${parentName}, ${phone}, ${email}, ${childName},
            ${sql.json(attendees)}, ${totalPeople}, ${totalJumpers},
            ${notes}, ${messageToRayyan}, ${newToken}, ${recognized})
-        RETURNING id, created_at, updated_at, attending, parent_name, contact,
+        RETURNING id, created_at, updated_at, attending, parent_name, phone, email, contact,
                   child_name, attendees, notes, message_to_rayyan
       `;
       savedRow = rows[0];

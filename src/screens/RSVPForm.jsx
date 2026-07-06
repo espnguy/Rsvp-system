@@ -12,7 +12,8 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
     initial && Array.isArray(initial.attendees) ? initial.attendees.slice(1) : [];
 
   const [parentName, setParentName] = useState(initial ? initial.parentName : '');
-  const [contact, setContact] = useState(initial ? initial.contact : '');
+  const [phone, setPhone] = useState(initial ? (initial.phone || initial.contact || '') : '');
+  const [email, setEmail] = useState(initial ? initial.email || '' : '');
   const [childName, setChildName] = useState(
     initial ? (firstAttendee ? firstAttendee.name : initial.childName || '') : ''
   );
@@ -53,7 +54,7 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
 
   const validate = () => {
     if (!parentName.trim()) return 'Please enter your name.';
-    if (!contact.trim()) return 'Please enter a phone number or email.';
+    if (!phone.trim()) return 'Please enter a phone number.';
     if (attendees.length === 0) return 'Please add at least one guest.';
     for (const e of extras) {
       if (!e.name.trim()) return 'Each added guest needs a name (or remove the row).';
@@ -73,7 +74,8 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
     const payload = {
       attending: true,
       parentName: parentName.trim(),
-      contact: contact.trim(),
+      phone: phone.trim(),
+      email: email.trim() || null,
       childName: childName.trim(),
       attendees,
       notes: notes.trim() || null,
@@ -138,14 +140,23 @@ export default function RSVPForm({ onBack, onSuccess, initialData }) {
             name="parentName"
           />
           <Input
-            label="Phone or email"
-            value={contact}
-            onChange={setContact}
-            placeholder="617-555-0142 or you@example.com"
+            label="Phone number"
+            value={phone}
+            onChange={setPhone}
+            placeholder="617-555-0142"
             required
+            autoComplete="tel"
+            inputMode="tel"
+            name="phone"
+          />
+          <Input
+            label="Email (optional)"
+            value={email}
+            onChange={setEmail}
+            placeholder="you@example.com"
             autoComplete="email"
             inputMode="email"
-            name="contact"
+            name="email"
           />
         </div>
 

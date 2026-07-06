@@ -241,7 +241,7 @@ ${STYLES}
 </html>`;
 }
 
-function listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, invitees, textbeltConfigured }) {
+function listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, textbeltConfigured }) {
   const flashHtml = flash
     ? `<div class="flash flash-${flash.type}">${escapeHtml(flash.message)}</div>`
     : '';
@@ -262,7 +262,9 @@ function listPage({ rows, totals, flash, settings, resendConfigured, inviteList,
           <td class="nowrap">${escapeHtml(fmtDate(r.created_at))}</td>
           <td>
             <div class="who">${escapeHtml(r.parent_name)}${r.recognized === false && inviteList.length > 0 ? ' <span class="tag tag-red" title="Not on invite list">🚩 Unknown</span>' : ''}</div>
-            <div class="muted small">${escapeHtml(r.contact) || '<span class="muted">—</span>'}</div>
+            ${(r.phone || r.contact) ? `<div class="muted small">📱 ${escapeHtml(r.phone || r.contact)}</div>` : ''}
+            ${r.email ? `<div class="muted small">✉️ ${escapeHtml(r.email)}</div>` : ''}
+            ${!r.phone && !r.contact && !r.email ? '<span class="muted small">—</span>' : ''}
           </td>
           <td>${
             r.attending
@@ -298,40 +300,50 @@ ${STYLES}
     <h1>Rayyan's Birthday RSVPs</h1>
     <div class="sub">${rows.length} response${rows.length === 1 ? '' : 's'} · times in Eastern</div>
   </div>
-  <form method="post" action="/admin?action=logout" style="margin:0">
-    <button type="submit" class="btn-ghost">Log out</button>
-  </form>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a href="/admin?action=add-rsvp" class="btn-ghost" style="text-decoration:none">+ Add RSVP</a>
+    <form method="post" action="/admin?action=logout" style="margin:0">
+      <button type="submit" class="btn-ghost">Log out</button>
+    </form>
+  </div>
 </header>
 <main>
   ${flashHtml}
 
   <div class="card" style="margin-bottom:14px">
     <b style="font-size:14px">Invite list</b>
-    <p class="muted small" style="margin:4px 0 10px">RSVPs from names not on this list are flagged 🚩. Names with no RSVP show in "Not responded yet" below.</p>
-    <form method="post" action="/admin?action=add-invite" style="display:flex;gap:8px;margin-bottom:10px">
-      <input type="text" name="name" placeholder="Full name, e.g. Sarah Johnson" style="flex:1;font-size:14px;padding:8px 10px" required />
+    <p class="muted small" style="margin:4px 0 10px">RSVPs from names not on this list are flagged 🚩. Add a phone number to enable text reminders.</p>
+    <form method="post" action="/admin?action=add-invite" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input type="text" name="name" placeholder="Full name, e.g. Sarah Johnson" style="flex:1 1 180px;font-size:14px;padding:8px 10px" required />
+      <input type="text" name="phone" placeholder="Phone (optional)" style="flex:1 1 150px;font-size:14px;padding:8px 10px" />
       <button type="submit" class="btn btn-edit" style="white-space:nowrap">Add</button>
     </form>
     ${inviteList.length === 0
       ? '<p class="muted small">No names added yet.</p>'
-      : `<div>${inviteList.map((name) => `
-        <div class="invite-item">
-          <span style="font-size:14px">${escapeHtml(name)}</span>
-          <form method="post" action="/admin?action=remove-invite" style="margin:0">
-            <input type="hidden" name="name" value="${escapeAttr(name)}" />
-            <button class="btn btn-delete" style="padding:4px 8px;font-size:11px">Remove</button>
-          </form>
-        </div>`).join('')}</div>`
+      : `<table style="margin-top:4px">
+          <thead><tr><th>Name</th><th>Phone</th><th>RSVP</th><th></th></tr></thead>
+          <tbody>${inviteList.map((inv) => `
+            <tr>
+              <td style="font-size:14px">${escapeHtml(inv.name)}</td>
+              <td style="font-size:14px">${inv.phone ? escapeHtml(inv.phone) : '<span class="muted">—</span>'}</td>
+              <td>${
+                inv.status === 'yes'
+                  ? '<span class="invitee-status-yes">✓ Yes</span>'
+                  : inv.status === 'no'
+                  ? '<span class="invitee-status-no">✗ No</span>'
+                  : '<span class="invitee-status-pending">⏳ Pending</span>'
+              }</td>
+              <td>
+                <form method="post" action="/admin?action=remove-invite" style="margin:0">
+                  <input type="hidden" name="name" value="${escapeAttr(inv.name)}" />
+                  <button class="btn btn-delete" style="padding:3px 8px;font-size:11px" type="submit">Remove</button>
+                </form>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
     }
   </div>
-
-  ${notResponded.length > 0 ? `
-  <div class="not-responded-card">
-    <b style="font-size:14px">⏳ Not responded yet (${notResponded.length})</b>
-    <div class="pill-list">
-      ${notResponded.map((name) => `<span class="badge badge-gray">${escapeHtml(name)}</span>`).join('')}
-    </div>
-  </div>` : ''}
 
   <div class="card" style="margin-bottom:14px">
     <form method="post" action="/admin?action=save-settings" style="margin:0">
@@ -345,48 +357,13 @@ ${STYLES}
   </div>
 
   ${(function() {
-    const allCount = invitees.filter(i => i.phone_number).length;
-    const pendingCount = invitees.filter(i => i.phone_number && i.status === 'pending').length;
-    const respondedCount = rows.filter(r => r.attending && looksLikePhone(r.contact)).length;
-    const inviteesRowsHtml = invitees.length === 0
-      ? '<p class="muted small" style="margin:8px 0 0">No invitees added yet.</p>'
-      : `<table class="invitee-table" style="margin-top:10px">
-          <thead><tr><th>Name</th><th>Phone</th><th>RSVP Status</th><th></th></tr></thead>
-          <tbody>${invitees.map(inv => `
-            <tr>
-              <td style="font-size:14px">${escapeHtml(inv.name)}</td>
-              <td style="font-size:14px">${inv.phone_number ? escapeHtml(inv.phone_number) : '<span class="muted">—</span>'}</td>
-              <td>${
-                inv.status === 'yes'
-                  ? '<span class="invitee-status-yes">✓ RSVPd yes</span>'
-                  : inv.status === 'no'
-                  ? '<span class="invitee-status-no">✗ RSVPd no</span>'
-                  : '<span class="invitee-status-pending">⏳ Pending</span>'
-              }</td>
-              <td>
-                <form method="post" action="/admin?action=remove-invitee" style="margin:0">
-                  <input type="hidden" name="invitee_id" value="${escapeAttr(String(inv.id))}" />
-                  <button class="btn btn-delete" style="padding:3px 8px;font-size:11px" type="submit">Remove</button>
-                </form>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
+    const allCount = inviteList.filter(i => i.phone).length;
+    const pendingCount = inviteList.filter(i => i.phone && i.status === 'pending').length;
+    const respondedCount = rows.filter(r => r.attending && (r.phone || looksLikePhone(r.contact))).length;
     const smsWarning = !textbeltConfigured
       ? '<div class="flash flash-error" style="margin-top:10px">Set the <code>TEXTBELT_API_KEY</code> env var to enable sending.</div>'
       : '';
     return `
-  <div class="card" style="margin-bottom:14px">
-    <b style="font-size:14px">📱 Phone Invitees</b>
-    <p class="muted small" style="margin:4px 0 10px">Add invitees with phone numbers to send text reminders. RSVP status is matched automatically by name.</p>
-    <form method="post" action="/admin?action=add-invitee" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <input type="text" name="name" placeholder="Full name" style="flex:1 1 180px;font-size:14px;padding:8px 10px" required />
-      <input type="text" name="phone" placeholder="Phone, e.g. 5551234567" style="flex:1 1 160px;font-size:14px;padding:8px 10px" />
-      <button type="submit" class="btn btn-edit" style="white-space:nowrap">Add</button>
-    </form>
-    ${inviteesRowsHtml}
-  </div>
-
   <div class="card" style="margin-bottom:14px">
     <b style="font-size:14px">💬 Send Text Reminders</b>
     ${smsWarning}
@@ -395,17 +372,17 @@ ${STYLES}
       <div class="radio-group">
         <label>
           <input type="radio" name="group" value="all" checked />
-          All invitees with a phone
+          All invite list members with a phone
           <span class="radio-count">${allCount}</span>
         </label>
         <label>
           <input type="radio" name="group" value="pending" />
-          Not responded yet
+          Not responded yet (invite list, with phone)
           <span class="radio-count">${pendingCount}</span>
         </label>
         <label>
           <input type="radio" name="group" value="responded" />
-          RSVPd yes (attending)
+          RSVPd yes (attending, with phone)
           <span class="radio-count">${respondedCount}</span>
         </label>
       </div>
@@ -478,8 +455,11 @@ ${STYLES}
       <label for="parent_name">Parent / guardian name</label>
       <input type="text" id="parent_name" name="parent_name" value="${escapeAttr(row.parent_name)}" required />
 
-      <label for="contact">Phone or email</label>
-      <input type="text" id="contact" name="contact" value="${escapeAttr(row.contact)}" placeholder="Optional for non-attending responses" />
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone" value="${escapeAttr(row.phone || row.contact || '')}" placeholder="e.g. 5551234567" />
+
+      <label for="email">Email (optional)</label>
+      <input type="email" id="email" name="email" value="${escapeAttr(row.email || '')}" placeholder="you@example.com" />
 
       <label for="attending">Coming?</label>
       <select id="attending" name="attending">
@@ -583,26 +563,6 @@ ${STYLES}
 </html>`;
 }
 
-async function ensureInviteesTable(sql) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS invitees (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      phone_number TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-}
-
-async function getInvitees(sql) {
-  try {
-    await ensureInviteesTable(sql);
-    return await sql`SELECT id, name, phone_number FROM invitees ORDER BY created_at ASC`;
-  } catch {
-    return [];
-  }
-}
-
 async function sendSmsViaTextbelt(phone, message, apiKey) {
   const resp = await fetch('https://textbelt.com/text', {
     method: 'POST',
@@ -668,6 +628,116 @@ ${STYLES}
 </html>`;
 }
 
+function createPage({ error }) {
+  const errHtml = error ? `<div class="flash flash-error">${escapeHtml(error)}</div>` : '';
+  const attendeesJson = JSON.stringify([{ name: '', isJumper: true }]);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Add RSVP · Rayyan's Party</title>
+${STYLES}
+</head>
+<body>
+<header>
+  <div class="head-left">
+    <h1>Add RSVP manually</h1>
+    <div class="sub"><a class="back-link" href="/admin">← Back to all RSVPs</a></div>
+  </div>
+  <form method="post" action="/admin?action=logout" style="margin:0">
+    <button type="submit" class="btn-ghost">Log out</button>
+  </form>
+</header>
+<main>
+  ${errHtml}
+  <form method="post" action="/admin?action=create" id="createForm">
+    <div class="card">
+      <label for="parent_name">Parent / guardian name</label>
+      <input type="text" id="parent_name" name="parent_name" required autofocus />
+
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone" placeholder="e.g. 5551234567" />
+
+      <label for="email">Email (optional)</label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" />
+
+      <label for="attending">Coming?</label>
+      <select id="attending" name="attending">
+        <option value="true" selected>Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <label>Attendees</label>
+      <div id="attendees"></div>
+      <button type="button" class="add-attendee" id="addAttendee">+ Add another person</button>
+      <input type="hidden" name="attendees_json" id="attendeesJson" />
+    </div>
+
+    <div class="card">
+      <label for="notes">Notes</label>
+      <textarea id="notes" name="notes" rows="2"></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 16px;font-size:14px;">Add RSVP</button>
+      <a class="btn btn-link" href="/admin">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<script>
+(function () {
+  var initial = ${attendeesJson};
+  var container = document.getElementById('attendees');
+  var hidden = document.getElementById('attendeesJson');
+
+  function render(list) {
+    container.innerHTML = '';
+    list.forEach(function (a, i) {
+      var row = document.createElement('div');
+      row.className = 'attendee-row';
+
+      var nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Name';
+      nameInput.value = a.name || '';
+      nameInput.addEventListener('input', function () { list[i].name = nameInput.value; sync(); });
+
+      var jumperSelect = document.createElement('select');
+      var optJ = document.createElement('option'); optJ.value = 'true'; optJ.textContent = '👧 Child';
+      var optN = document.createElement('option'); optN.value = 'false'; optN.textContent = 'Adult';
+      jumperSelect.appendChild(optJ); jumperSelect.appendChild(optN);
+      jumperSelect.value = a.isJumper ? 'true' : 'false';
+      jumperSelect.addEventListener('change', function () { list[i].isJumper = jumperSelect.value === 'true'; sync(); });
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button'; removeBtn.className = 'remove-btn'; removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', function () { list.splice(i, 1); render(list); });
+
+      row.appendChild(nameInput); row.appendChild(jumperSelect); row.appendChild(removeBtn);
+      container.appendChild(row);
+    });
+    sync();
+  }
+
+  function sync() { hidden.value = JSON.stringify(list); }
+
+  var list = initial.slice();
+  render(list);
+
+  document.getElementById('addAttendee').addEventListener('click', function () {
+    list.push({ name: '', isJumper: true }); render(list);
+  });
+  document.getElementById('createForm').addEventListener('submit', function () { sync(); });
+})();
+</script>
+</body>
+</html>`;
+}
+
 function htmlError(res, status, title, detail) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
@@ -684,7 +754,7 @@ function htmlError(res, status, title, detail) {
 async function loadAllRows(sql) {
   try {
     const rows = await sql`
-      SELECT id, created_at, attending, parent_name, contact, child_name,
+      SELECT id, created_at, attending, parent_name, phone, email, contact, child_name,
              attendees, total_people, total_jumpers, notes, message_to_rayyan, recognized
       FROM rsvps
       ORDER BY created_at DESC
@@ -734,7 +804,10 @@ async function getInviteList(sql) {
   try {
     const rows = await sql`SELECT value FROM app_settings WHERE key = 'invite_list' LIMIT 1`;
     const v = rows[0] && rows[0].value;
-    return v ? JSON.parse(v) : [];
+    if (!v) return [];
+    const parsed = JSON.parse(v);
+    // Normalize: old format was array of strings, new format is array of {name, phone}
+    return parsed.map((item) => (typeof item === 'string' ? { name: item, phone: null } : item));
   } catch {
     return [];
   }
@@ -773,9 +846,9 @@ function looksLikePhone(s) {
 }
 
 function computeNotResponded(inviteList, rsvpRows) {
-  return inviteList.filter(
-    (invited) => !rsvpRows.some((r) => namesMatch(r.parent_name, invited))
-  );
+  return inviteList
+    .filter((inv) => !rsvpRows.some((r) => namesMatch(r.parent_name, inv.name)))
+    .map((inv) => inv.name);
 }
 
 function computeTotals(rows) {
@@ -796,7 +869,7 @@ function computeTotals(rows) {
 
 async function loadOne(sql, id) {
   const rows = await sql`
-    SELECT id, created_at, attending, parent_name, contact, child_name,
+    SELECT id, created_at, attending, parent_name, phone, email, contact, child_name,
            attendees, total_people, total_jumpers, notes, message_to_rayyan
     FROM rsvps WHERE id = ${id}
   `;
@@ -908,11 +981,12 @@ export default async function handler(req, res) {
   if (req.method === 'POST' && action === 'add-invite') {
     const body = parseBody(req);
     const name = asStringOrNull(body.name);
+    const phone = asStringOrNull(body.phone);
     if (!name) return redirect(res, '/admin', { type: 'error', message: 'Name cannot be empty.' });
     try {
       const list = await getInviteList(sql);
-      if (!list.includes(name)) {
-        list.push(name);
+      if (!list.some((i) => i.name === name)) {
+        list.push({ name, phone });
         await saveInviteList(sql, list);
       }
       return redirect(res, '/admin', { type: 'success', message: `Added "${name}" to invite list.` });
@@ -926,7 +1000,7 @@ export default async function handler(req, res) {
     const name = asStringOrNull(body.name);
     try {
       const list = await getInviteList(sql);
-      await saveInviteList(sql, list.filter((n) => n !== name));
+      await saveInviteList(sql, list.filter((i) => i.name !== name));
       return redirect(res, '/admin', { type: 'success', message: `Removed "${name}" from invite list.` });
     } catch (err) {
       return htmlError(res, 500, 'Save failed', err.message);
@@ -987,7 +1061,8 @@ export default async function handler(req, res) {
     }
 
     const attending = String(body.attending) === 'true';
-    const contact = asStringOrNull(body.contact) || '';
+    const phone = asStringOrNull(body.phone);
+    const email = asStringOrNull(body.email);
     const notes = asStringOrNull(body.notes);
     const messageToRayyan = asStringOrNull(body.message_to_rayyan);
 
@@ -1015,7 +1090,8 @@ export default async function handler(req, res) {
         UPDATE rsvps SET
           attending = ${attending},
           parent_name = ${parentName},
-          contact = ${contact},
+          phone = ${phone},
+          email = ${email},
           child_name = ${derivedChildName},
           attendees = ${sql.json(attendees)},
           total_people = ${totalPeople},
@@ -1034,35 +1110,6 @@ export default async function handler(req, res) {
     }
   }
 
-  if (req.method === 'POST' && action === 'add-invitee') {
-    const body = parseBody(req);
-    const name = asStringOrNull(body.name);
-    const phone = asStringOrNull(body.phone);
-    if (!name) return redirect(res, '/admin', { type: 'error', message: 'Name cannot be empty.' });
-    try {
-      await ensureInviteesTable(sql);
-      await sql`INSERT INTO invitees (name, phone_number) VALUES (${name}, ${phone})`;
-      return redirect(res, '/admin', { type: 'success', message: `Added "${name}" to invitees.` });
-    } catch (err) {
-      return htmlError(res, 500, 'Save failed', err.message);
-    }
-  }
-
-  if (req.method === 'POST' && action === 'remove-invitee') {
-    const body = parseBody(req);
-    const invId = Number.parseInt(body.invitee_id, 10);
-    if (!invId || Number.isNaN(invId)) {
-      return redirect(res, '/admin', { type: 'error', message: 'Invalid invitee id.' });
-    }
-    try {
-      await ensureInviteesTable(sql);
-      await sql`DELETE FROM invitees WHERE id = ${invId}`;
-      return redirect(res, '/admin', { type: 'success', message: 'Invitee removed.' });
-    } catch (err) {
-      return htmlError(res, 500, 'Delete failed', err.message);
-    }
-  }
-
   if (req.method === 'POST' && action === 'send-sms') {
     const body = parseBody(req);
     const message = asStringOrNull(body.message);
@@ -1077,17 +1124,22 @@ export default async function handler(req, res) {
     }
 
     try {
-      const [invitees, rsvpRows] = await Promise.all([getInvitees(sql), loadAllRows(sql)]);
+      const [inviteList, rsvpRows] = await Promise.all([getInviteList(sql), loadAllRows(sql)]);
+      const enriched = inviteList.map((inv) => {
+        const match = rsvpRows.find((r) => namesMatch(r.parent_name, inv.name));
+        return { ...inv, status: match ? (match.attending ? 'yes' : 'no') : 'pending' };
+      });
       let targets;
       if (group === 'responded') {
         targets = rsvpRows
-          .filter((r) => r.attending && looksLikePhone(r.contact))
-          .map((r) => ({ name: r.parent_name, phone_number: r.contact }));
+          .filter((r) => r.attending && (r.phone || looksLikePhone(r.contact)))
+          .map((r) => ({ name: r.parent_name, phone_number: r.phone || r.contact }));
       } else {
-        targets = invitees.filter((i) => i.phone_number);
+        targets = enriched.filter((i) => i.phone);
         if (group === 'pending') {
-          targets = targets.filter((i) => !rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
+          targets = targets.filter((i) => i.status === 'pending');
         }
+        targets = targets.map((i) => ({ name: i.name, phone_number: i.phone }));
       }
 
       const results = [];
@@ -1105,6 +1157,62 @@ export default async function handler(req, res) {
       return res.status(200).send(smsResultPage({ results, message, group }));
     } catch (err) {
       return htmlError(res, 500, 'SMS send failed', err.message);
+    }
+  }
+
+  if (req.method === 'GET' && action === 'add-rsvp') {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).send(createPage({ error: null }));
+  }
+
+  if (req.method === 'POST' && action === 'create') {
+    const body = parseBody(req);
+    const parentName = asStringOrNull(body.parent_name);
+    if (!parentName) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(400).send(createPage({ error: 'Parent name is required.' }));
+    }
+
+    const attending = String(body.attending) === 'true';
+    const phone = asStringOrNull(body.phone);
+    const email = asStringOrNull(body.email);
+    const notes = asStringOrNull(body.notes);
+
+    let attendees = [];
+    try {
+      const parsed = JSON.parse(body.attendees_json || '[]');
+      if (Array.isArray(parsed)) {
+        attendees = parsed
+          .map((a) => ({ name: (a && typeof a.name === 'string' ? a.name : '').trim(), isJumper: !!(a && a.isJumper) }))
+          .filter((a) => a.name.length > 0);
+      }
+    } catch { attendees = []; }
+
+    const totalPeople = attendees.length;
+    const totalJumpers = attendees.filter((a) => a.isJumper).length;
+    const derivedChildName = attendees.length > 0 ? attendees[0].name : null;
+
+    try {
+      const inviteList = await getInviteList(sql);
+      const recognized = inviteList.some((item) => {
+        const name = typeof item === 'string' ? item : item.name;
+        return name && name.toLowerCase().trim() === parentName.toLowerCase().trim();
+      });
+      const newToken = crypto.randomBytes(24).toString('hex');
+      await sql`
+        INSERT INTO rsvps
+          (attending, parent_name, phone, email, child_name, attendees,
+           total_people, total_jumpers, notes, edit_token, recognized)
+        VALUES
+          (${attending}, ${parentName}, ${phone}, ${email}, ${derivedChildName},
+           ${sql.json(attendees)}, ${totalPeople}, ${totalJumpers}, ${notes}, ${newToken}, ${recognized})
+      `;
+      return redirect(res, '/admin', { type: 'success', message: `Added RSVP for "${parentName}".` });
+    } catch (err) {
+      console.error('Create RSVP failed:', err);
+      return htmlError(res, 500, 'Create failed', err.message);
     }
   }
 
@@ -1129,19 +1237,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [rows, settings, inviteList, rawInvitees] = await Promise.all([
+    const [rows, settings, rawInviteList] = await Promise.all([
       loadAllRows(sql),
       loadSettings(sql),
       getInviteList(sql),
-      getInvitees(sql),
     ]);
     const totals = computeTotals(rows);
-    const notResponded = computeNotResponded(inviteList, rows);
-    const invitees = rawInvitees.map((inv) => {
+    const inviteList = rawInviteList.map((inv) => {
       const match = rows.find((r) => namesMatch(r.parent_name, inv.name));
-      const status = match ? (match.attending ? 'yes' : 'no') : 'pending';
-      return { ...inv, status };
+      return { ...inv, status: match ? (match.attending ? 'yes' : 'no') : 'pending' };
     });
+    const notResponded = inviteList.filter((i) => i.status === 'pending').map((i) => i.name);
     const flash = parseFlash(q.flash);
     const resendConfigured = !!process.env.RESEND_API_KEY;
     const textbeltConfigured = !!process.env.TEXTBELT_API_KEY;
@@ -1149,7 +1255,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res
       .status(200)
-      .send(listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, invitees, textbeltConfigured }));
+      .send(listPage({ rows, totals, flash, settings, resendConfigured, inviteList, notResponded, textbeltConfigured }));
   } catch (err) {
     console.error('Admin query failed:', err);
     return htmlError(res, 500, 'Error loading RSVPs', err.message);

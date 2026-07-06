@@ -8,7 +8,8 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
   const [parentName, setParentName] = useState(
     initial ? initial.parentName || '' : ''
   );
-  const [contact, setContact] = useState(initial ? initial.contact || '' : '');
+  const [phone, setPhone] = useState(initial ? (initial.phone || initial.contact || '') : '');
+  const [email, setEmail] = useState(initial ? initial.email || '' : '');
   const [message, setMessage] = useState(
     initial ? initial.messageToRayyan || '' : ''
   );
@@ -27,7 +28,8 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
     const payload = {
       attending: false,
       parentName: parentName.trim(),
-      contact: contact.trim() || null,
+      phone: phone.trim() || null,
+      email: email.trim() || null,
       childName: null,
       attendees: [],
       notes: null,
@@ -119,13 +121,22 @@ export default function Declined({ onBack, onSuccess, done, initialData }) {
             name="parentName"
           />
           <Input
-            label="Phone or email (optional)"
-            value={contact}
-            onChange={setContact}
-            placeholder="617-555-0142 or you@example.com"
+            label="Phone (optional)"
+            value={phone}
+            onChange={setPhone}
+            placeholder="617-555-0142"
+            autoComplete="tel"
+            inputMode="tel"
+            name="phone"
+          />
+          <Input
+            label="Email (optional)"
+            value={email}
+            onChange={setEmail}
+            placeholder="you@example.com"
             autoComplete="email"
             inputMode="email"
-            name="contact"
+            name="email"
           />
           <Input
             label="Message to Rayyan (optional)"

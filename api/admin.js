@@ -347,7 +347,7 @@ ${STYLES}
   ${(function() {
     const allCount = invitees.filter(i => i.phone_number).length;
     const pendingCount = invitees.filter(i => i.phone_number && i.status === 'pending').length;
-    const respondedCount = invitees.filter(i => i.phone_number && i.status === 'yes').length;
+    const respondedCount = rows.filter(r => r.attending && looksLikePhone(r.contact)).length;
     const inviteesRowsHtml = invitees.length === 0
       ? '<p class="muted small" style="margin:8px 0 0">No invitees added yet.</p>'
       : `<table class="invitee-table" style="margin-top:10px">
@@ -766,6 +766,12 @@ function namesMatch(a, b) {
   return false;
 }
 
+function looksLikePhone(s) {
+  if (!s) return false;
+  if (s.includes('@')) return false;
+  return s.replace(/\D/g, '').length >= 7;
+}
+
 function computeNotResponded(inviteList, rsvpRows) {
   return inviteList.filter(
     (invited) => !rsvpRows.some((r) => namesMatch(r.parent_name, invited))
@@ -1072,11 +1078,16 @@ export default async function handler(req, res) {
 
     try {
       const [invitees, rsvpRows] = await Promise.all([getInvitees(sql), loadAllRows(sql)]);
-      let targets = invitees.filter((i) => i.phone_number);
-      if (group === 'pending') {
-        targets = targets.filter((i) => !rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
-      } else if (group === 'responded') {
-        targets = targets.filter((i) => rsvpRows.some((r) => namesMatch(r.parent_name, i.name) && r.attending));
+      let targets;
+      if (group === 'responded') {
+        targets = rsvpRows
+          .filter((r) => r.attending && looksLikePhone(r.contact))
+          .map((r) => ({ name: r.parent_name, phone_number: r.contact }));
+      } else {
+        targets = invitees.filter((i) => i.phone_number);
+        if (group === 'pending') {
+          targets = targets.filter((i) => !rsvpRows.some((r) => namesMatch(r.parent_name, i.name)));
+        }
       }
 
       const results = [];

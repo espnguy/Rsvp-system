@@ -2,6 +2,16 @@ import postgres from 'postgres';
 import crypto from 'node:crypto';
 
 let _sql;
+let _columnsReady = false;
+async function ensureColumns(sql) {
+  if (_columnsReady) return;
+  try {
+    await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS phone TEXT`;
+    await sql`ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS email TEXT`;
+    await sql`ALTER TABLE rsvps ALTER COLUMN contact DROP NOT NULL`.catch(() => {});
+  } catch { /* table may not exist yet */ }
+  _columnsReady = true;
+}
 function getSql() {
   if (_sql) return _sql;
   const conn =
@@ -972,6 +982,7 @@ export default async function handler(req, res) {
   let sql;
   try {
     sql = getSql();
+    await ensureColumns(sql);
   } catch (err) {
     return htmlError(res, 500, 'Database not configured', err.message);
   }

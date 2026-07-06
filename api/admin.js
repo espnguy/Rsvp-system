@@ -176,8 +176,8 @@ const STYLES = `
   .card { background:#fff; border-radius: 10px; padding: 18px; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.06); margin-bottom: 14px; }
   label { display:block; font-weight:600; font-size: 13px; margin: 12px 0 6px; color:#2b2b2b; }
   label:first-child { margin-top: 0; }
-  input[type=text], input[type=email], input[type=password], textarea, select { width:100%; padding: 10px 12px; border: 2px solid #d9d5cb; border-radius: 8px; font: inherit; font-size: 16px; background:#fff; }
-  input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,85,191,.15); }
+  input[type=text], input[type=email], input[type=password], input[type=tel], textarea, select { width:100%; padding: 10px 12px; border: 2px solid #d9d5cb; border-radius: 8px; font: inherit; font-size: 16px; background:#fff; }
+  input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=tel]:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,85,191,.15); }
   textarea { resize: vertical; min-height: 60px; }
   .attendee-row { display:grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
   .attendee-row select { width: auto; padding: 8px 10px; font-size: 14px; }

@@ -75,6 +75,16 @@ export default function Welcome({ onYes, onNo, existingRsvp, onEdit }) {
                     Get directions →
                   </a>
                 )}
+                {PARTY.waiverUrl && (
+                  <a
+                    href={PARTY.waiverUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block mt-1 text-sm font-semibold text-lego-blue underline"
+                  >
+                    Sign the waiver →
+                  </a>
+                )}
               </>
             }
           />

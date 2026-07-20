@@ -5,7 +5,12 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Projects\\\\Rsvp-system\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\Projects\\\\Rsvp-system\" -Force | Where-Object { $_.Name -notmatch '^node_modules$|^\\\\.git$' } | Format-List FullName, PSIsContainer)"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Projects\\\\Rsvp-system\" -Force | Where-Object { $_.Name -notmatch '^node_modules$|^\\\\.git$' } | Format-List FullName, PSIsContainer)",
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)",
+      "PowerShell(node --check api/admin.js)",
+      "PowerShell(Get-Command node -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command npm -ErrorAction SilentlyContinue)"
     ]
   }
 }

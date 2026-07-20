@@ -367,43 +367,60 @@ ${STYLES}
   </div>
 
   ${(function() {
-    const allCount = inviteList.filter(i => i.phone).length;
-    const pendingCount = inviteList.filter(i => i.phone && i.status === 'pending').length;
-    const respondedCount = rows.filter(r => r.attending && (r.phone || looksLikePhone(r.contact))).length;
+    const recipientList = buildSmsRecipientList(inviteList, rows);
     const smsWarning = !textbeltConfigured
       ? '<div class="flash flash-error" style="margin-top:10px">Set the <code>TEXTBELT_API_KEY</code> env var to enable sending.</div>'
       : '';
+    const statusLabel = (s) => s === 'yes' ? 'RSVPd yes' : s === 'no' ? 'RSVPd no' : 'Pending';
+    const recipientsHtml = recipientList.length === 0
+      ? '<p class="muted small" style="margin:0">No one with a phone number yet.</p>'
+      : recipientList.map((r) => `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-weight:normal">
+          <input type="checkbox" name="recipients" value="${escapeAttr(r.phone)}" data-status="${r.status}" checked />
+          <span style="flex:1">${escapeHtml(r.name)}</span>
+          <span class="muted small">${escapeHtml(r.phone)}</span>
+          <span class="muted small" style="width:80px;text-align:right">${statusLabel(r.status)}</span>
+        </label>`).join('');
     return `
-  <div class="card" style="margin-bottom:14px">
+  <div class="card" style="margin-bottom:14px" id="smsCard">
     <b style="font-size:14px">💬 Send Text Reminders</b>
     ${smsWarning}
-    <form method="post" action="/admin?action=send-sms" style="margin-top:10px" onsubmit="return confirm('Send texts to the selected group?');">
-      <label style="margin-top:0">Recipients</label>
-      <div class="radio-group">
-        <label>
-          <input type="radio" name="group" value="all" checked />
-          All invite list members with a phone
-          <span class="radio-count">${allCount}</span>
-        </label>
-        <label>
-          <input type="radio" name="group" value="pending" />
-          Not responded yet (invite list, with phone)
-          <span class="radio-count">${pendingCount}</span>
-        </label>
-        <label>
-          <input type="radio" name="group" value="responded" />
-          RSVPd yes (attending, with phone)
-          <span class="radio-count">${respondedCount}</span>
-        </label>
+    <form method="post" action="/admin?action=send-sms" style="margin-top:10px" onsubmit="return confirm('Send texts to the checked recipients?');">
+      <label style="margin-top:0">Recipients (${recipientList.length} with phone)</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button type="button" class="btn btn-edit" data-select="all">All</button>
+        <button type="button" class="btn btn-edit" data-select="none">None</button>
+        <button type="button" class="btn btn-edit" data-select="pending">Not responded</button>
+        <button type="button" class="btn btn-edit" data-select="yes">RSVPd yes</button>
+      </div>
+      <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border,#ddd);border-radius:8px;padding:8px;margin-bottom:10px">
+        ${recipientsHtml}
       </div>
       <label>Message</label>
       <textarea name="message" rows="3" placeholder="Hi! Just a reminder about Rayyan's birthday party this Saturday…" required></textarea>
       <div class="actions" style="margin-top:10px">
         <button type="submit" class="btn btn-sms" ${!textbeltConfigured ? 'disabled' : ''}>Send texts</button>
-        <span class="muted small">Each text costs ~$0.01 via Textbelt.</span>
+        <span class="muted small">Each text costs ~$0.01 via Textbelt. Uncheck anyone who already got it.</span>
       </div>
     </form>
-  </div>`;
+  </div>
+  <script>
+  (function () {
+    var card = document.getElementById('smsCard');
+    if (!card) return;
+    var boxes = card.querySelectorAll('input[type=checkbox][name=recipients]');
+    Array.prototype.forEach.call(card.querySelectorAll('[data-select]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-select');
+        Array.prototype.forEach.call(boxes, function (b) {
+          if (mode === 'all') b.checked = true;
+          else if (mode === 'none') b.checked = false;
+          else b.checked = b.getAttribute('data-status') === mode;
+        });
+      });
+    });
+  })();
+  </script>`;
   })()}
 
   <div class="totals">
@@ -573,6 +590,20 @@ ${STYLES}
 </html>`;
 }
 
+function buildSmsRecipientList(inviteList, rsvpRows) {
+  const enriched = inviteList.map((inv) => {
+    const match = rsvpRows.find((r) => namesMatch(r.parent_name, inv.name));
+    return { ...inv, status: match ? (match.attending ? 'yes' : 'no') : 'pending' };
+  });
+  const fromInviteList = enriched
+    .filter((i) => i.phone)
+    .map((i) => ({ name: i.name, phone: i.phone, status: i.status }));
+  const fromRsvpOnly = rsvpRows
+    .filter((r) => r.attending && (r.phone || looksLikePhone(r.contact)) && !inviteList.some((inv) => namesMatch(inv.name, r.parent_name)))
+    .map((r) => ({ name: r.parent_name, phone: r.phone || r.contact, status: 'yes' }));
+  return [...fromInviteList, ...fromRsvpOnly];
+}
+
 async function sendSmsViaTextbelt(phone, message, apiKey) {
   const resp = await fetch('https://textbelt.com/text', {
     method: 'POST',
@@ -583,12 +614,11 @@ async function sendSmsViaTextbelt(phone, message, apiKey) {
   return await resp.json();
 }
 
-function smsResultPage({ results, message, group }) {
+function smsResultPage({ results, message }) {
   const succeeded = results.filter((r) => r.success).length;
   const failed = results.length - succeeded;
-  const groupLabel = group === 'pending' ? 'not responded yet' : group === 'responded' ? 'RSVPd yes (attending)' : 'all invitees';
   const rowsHtml = results.length === 0
-    ? `<tr><td colspan="3" class="empty">No recipients had a phone number in this group.</td></tr>`
+    ? `<tr><td colspan="3" class="empty">No recipients were selected.</td></tr>`
     : results.map((r) => `
       <tr class="sms-result-row">
         <td>${escapeHtml(r.name)}</td>
@@ -616,7 +646,7 @@ ${STYLES}
 </header>
 <main>
   <div class="card">
-    <b style="font-size:14px">Sent to: ${escapeHtml(groupLabel)}</b>
+    <b style="font-size:14px">Sent to ${results.length} selected recipient${results.length === 1 ? '' : 's'}</b>
     <p class="muted small" style="margin:6px 0 0">Message: "${escapeHtml(message)}"</p>
   </div>
   <div class="totals" style="margin-bottom:14px">
@@ -891,7 +921,11 @@ function parseBody(req) {
   if (typeof req.body === 'string') {
     const params = new URLSearchParams(req.body);
     const out = {};
-    for (const [k, v] of params.entries()) out[k] = v;
+    for (const [k, v] of params.entries()) {
+      if (out[k] === undefined) out[k] = v;
+      else if (Array.isArray(out[k])) out[k].push(v);
+      else out[k] = [out[k], v];
+    }
     return out;
   }
   return req.body;
@@ -1124,7 +1158,9 @@ export default async function handler(req, res) {
   if (req.method === 'POST' && action === 'send-sms') {
     const body = parseBody(req);
     const message = asStringOrNull(body.message);
-    const group = body.group || 'all';
+    const selectedPhones = body.recipients
+      ? (Array.isArray(body.recipients) ? body.recipients : [body.recipients])
+      : [];
     const apiKey = process.env.TEXTBELT_API_KEY;
 
     if (!apiKey) {
@@ -1133,25 +1169,16 @@ export default async function handler(req, res) {
     if (!message) {
       return redirect(res, '/admin', { type: 'error', message: 'Message cannot be empty.' });
     }
+    if (selectedPhones.length === 0) {
+      return redirect(res, '/admin', { type: 'error', message: 'Select at least one recipient.' });
+    }
 
     try {
       const [inviteList, rsvpRows] = await Promise.all([getInviteList(sql), loadAllRows(sql)]);
-      const enriched = inviteList.map((inv) => {
-        const match = rsvpRows.find((r) => namesMatch(r.parent_name, inv.name));
-        return { ...inv, status: match ? (match.attending ? 'yes' : 'no') : 'pending' };
-      });
-      let targets;
-      if (group === 'responded') {
-        targets = rsvpRows
-          .filter((r) => r.attending && (r.phone || looksLikePhone(r.contact)))
-          .map((r) => ({ name: r.parent_name, phone_number: r.phone || r.contact }));
-      } else {
-        targets = enriched.filter((i) => i.phone);
-        if (group === 'pending') {
-          targets = targets.filter((i) => i.status === 'pending');
-        }
-        targets = targets.map((i) => ({ name: i.name, phone_number: i.phone }));
-      }
+      const selectedSet = new Set(selectedPhones);
+      const targets = buildSmsRecipientList(inviteList, rsvpRows)
+        .filter((r) => selectedSet.has(r.phone))
+        .map((r) => ({ name: r.name, phone_number: r.phone }));
 
       const results = [];
       for (const t of targets) {
@@ -1165,7 +1192,7 @@ export default async function handler(req, res) {
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'no-store');
-      return res.status(200).send(smsResultPage({ results, message, group }));
+      return res.status(200).send(smsResultPage({ results, message }));
     } catch (err) {
       return htmlError(res, 500, 'SMS send failed', err.message);
     }
